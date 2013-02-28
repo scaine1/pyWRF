@@ -41,17 +41,53 @@ class calc_vars():
 	    pass
 
 
-	def compute_tk(self,pressure,theta):
+	def compute_lat_lon_nmm(self,var):
+	    """convert lat or lon in degrees (from radians)
+	    Inputs:
+	    -------
+	    GLAT or GLON from NMM core
+
+	    Returns:
+	    -------
+	    XLAT or XLONG in degrees
+
+	    """
+
+	    if self.wrf_core == 'NMM':
+		print 'converting your input array from radians to degrees'
+		outvar=var*57.2957795
+	    else:
+		print 'you are not using the nmm core and should not need this, returning input variable'
+		outvar=var
+
+	    return outvar
+
+
+
+	def compute_tk(self,pressure=None,theta=None):
 	    """Compute temperature in kelvin
 	    Inputs:
 	    -------
 	    Pressure  (pa I think)
 	    Potential Temperature  (Kelvin)
+	    If called without inputs, function will try and get the variables for you.
 	    
 	    Returns:
 	    -------
 	    Temperature in Kelvin
 	    """
+	    if (pressure == None):	    
+		try:
+		   pressure=self.variable_dict['PRES']
+		except:
+		   pressure=self.get_var('PRES')
+	
+	    if (theta == None):	    
+		try:
+		   theta=self.variable_dict['THETA']
+		except:
+		   theta=self.get_var('THETA')
+
 	    pressure=pressure*100.
 	    print 'calculating temperature in kelvin\n'
 
@@ -63,19 +99,41 @@ class calc_vars():
 	    tk=pi*theta
 	    return tk
 	
-	def compute_rh(self,qvapor,pressure,temperature):
+	def compute_rh(self,qvapor=None,pressure=None,temperature=None):
 	    """Compute the relative humidity
 	    Inputs:
 	    ------
 	    Qvapor (kg/kg)
 	    pressure (pa)
-	    Temperature (K) ---> This should be actually temperature not potential temperature I think
+	    Temperature (K) ---> This should be actual temperature not potential temperature I think
 	
+	    ***if called without input args function will try to get the variables for you
+
 	    Returns:
 	    --------
 	    Relative Humidity
 	
 	    """
+
+	    if (qvapor == None):
+		try:
+		   qvapor=self.variable_dict['QVAPOR']
+		except:
+		   qvapor=self.get_var('QVAPOR')
+
+	    if (pressure == None):	    
+		try:
+		   pressure=self.variable_dict['PRES']
+		except:
+		   pressure=self.get_var('PRES')
+	
+	    if (temperature == None):	    
+		try:
+		   temperature=self.variable_dict['TEMP']
+		except:
+		   temperature=self.get_var('TEMP')
+
+
 	    pressure=pressure*100.
 	    print 'calculating relative humidity\n'
 	    svp1=0.6112
@@ -97,9 +155,64 @@ class calc_vars():
 	    rh=100*n.where(inner_part <=0,0,inner_part)
 	    return rh
 	
+	def compute_vtmk(self,qvapor=None,tmk=None):
+	    """calculate the virtual temperature
+	    Inputs:
+	    -------
+	    None, will obtain variables for you.
+
+	    Optional Inputs:
+	    -------	    	    
+	    QVAPOR (kg/kg):- use qvapor=
+	    Temperature (kevlin i think): use tmk=
+	    
+	    Returns:
+	    -------
+	    Virtual emperature in Kelvin
+
+	    Exammple:
+	    -------
+	    wf=pyWRF.wrf_file('wrfoutxxxx')
+	    wf.compute_vtmk() 
+
+	    or 
+
+	    qvp=wf.get_var('QVAPOR')
+	    tmk=wf.get_var('TEMP')
+	    wf.compute_vtmk(qvpaor=qvp, tmk=tmk)
+
 	
+	    Notes:
+	    ------
+
+	    doing this quick, could be errors,check later simon
+
 	
-	def compute_td(self,qvapor,pressure):
+	    """
+	    if (qvapor == None):
+		try:
+		   qvapor=self.variable_dict['QVAPOR']
+		except:
+		   qvapor=self.get_var('QVAPOR')
+
+	    if (tmk == None):	    
+		try:
+		   tmk=self.variable_dict['TEMP']
+		except:
+		   tmk=self.get_var('TEMP')
+
+	    print 'calculating virtual temperature in kelvin\n'
+    
+	    qvapor_temp=qvapor*0.001
+	    eps=0.622
+
+	    vtmk=tmk * (eps+qvapor_temp)/(eps*(1.+qvapor_temp))
+
+	
+	    return vtmk
+
+	
+	def compute_td(self,qvapor=None,pressure=None):
 	    """calculate the dew point temperature
 	    Inputs:
 	    -------
@@ -116,7 +229,18 @@ class calc_vars():
 	    Need to modify this so that it does not matter if pressure is in pa or hpa
 	
 	    """
-	
+	    if (qvapor == None):
+		try:
+		   qvapor=self.variable_dict['QVAPOR']
+		except:
+		   qvapor=self.get_var('QVAPOR')
+
+	    if (pressure == None):	    
+		try:
+		   pressure=self.variable_dict['PRES']
+		except:
+		   pressure=self.get_var('PRES')
+
 	    print 'calculating dew point temperature in kelvin\n'
 #	    pressure=pressure/100.				#I think pressure needs to be in mb
 	    qv 		= n.where(qvapor <0.,0.,qvapor)
@@ -127,7 +251,64 @@ class calc_vars():
 	    return td
 	
 	
-	def compute_sph(self,qvapor):
+	
+	def compute_mslp(self):
+	    """calculate mslp using the hypsometric equation in the following form:
+	    MSLP =Psfc*exp^g*dz/(R*T)
+
+	    Inputs:
+	    -------
+	    Z (distance in meters from the surface to mean sea-level)
+	    g is gravity
+	    R is the dry gas constant
+	    T is the mean layer temperature from the surface to sea-level
+
+	    
+	    Returns:
+	    -------
+	    Mean Sea Level Pressure  (in mb)
+	
+	
+	    Notes:
+	    ------
+	    """
+
+	    if (self.wrf_core == 'ARW') or (self.wrf_core == 'NMM'):
+#		try:
+#		    psfc=self.variable_dict['PSFC']/100.
+#		except:
+#		    psfc=self.get_var('PSFC')/100.
+		try:
+		    pres=self.variable_dict['PRES']
+		except:
+		    pres=self.get_var('PRES')
+
+
+		try:
+		    Z=self.variable_dict['Z']
+		except:
+		    Z=self.get_var('Z')
+
+		try:
+		    T=self.variable_dict['TEMP']
+		except:
+		    T=self.get_var('TEMP')
+
+	
+
+
+	    rgas=287.04
+	    grav=9.81
+
+	    exponent=(grav*Z[0,0,:,:])/(rgas*T[0,0,:,:])
+#	    mslp = psfc[0,:,:]*n.exp(exponent)
+	    mslp = pres[0,0,:,:]*n.exp(exponent)
+
+
+	    return mslp
+	
+	
+	def compute_sph(self,qvapor=None):
 	    """calculate the specific humidity
 	    Inputs:
 	    -------
@@ -140,6 +321,37 @@ class calc_vars():
 	    """
 
 	    print 'calculating specific humidity in kg/kg'
+	    if (qvapor == None):
+		try:
+		   qvapor=self.variable_dict['QVAPOR']
+		except:
+		   qvapor=self.get_var('QVAPOR')
+
+	    sph=qvapor/(1+qvapor)
+
+	    return sph
+
+
+
+	def compute_sph(self,qvapor=None):
+	    """calculate the specific humidity
+	    Inputs:
+	    -------
+	    QVAPOR (kg/kg)
+
+	    Returns:
+	    -------
+	    Specific humidity in kg/kg
+
+	    """
+
+	    print 'calculating specific humidity in kg/kg'
+	    if (qvapor == None):
+		try:
+		   qvapor=self.variable_dict['QVAPOR']
+		except:
+		   qvapor=self.get_var('QVAPOR')
+
 	    sph=qvapor/(1+qvapor)
 
 	    return sph
@@ -403,6 +615,145 @@ class calc_vars():
 
 	    return dbz_lin
 
+	def calculate_dbz_thompson(self):
+	    """Calculate simulated radar reflectivity based on Thompson et al microphysics
+	    Inputs:
+	    -------
+		None: will get the variables it needs itself
+	    Returns:
+	    -------
+		reflectivity fields
+	
+	    Notes:
+	    ------
+	        simon needs to write something here
+	
+	    """
+
+	    try:
+	        import dbzcalc_thompson_py_ext
+	    except:
+		print 'cannot import dbzcalc_thompson_py_ext please run f2py on fortran file'
+		print 'reflectivity functions for Thompson scheme will not be available untill you do this'
+
+
+	    try:
+		qvp=self.variable_dict['QVAPOR']
+	    except:
+		qvp=self.get_var('QVAPOR')
+	    try:
+		qra=self.variable_dict['QRAIN']
+	    except:
+		qra= self.get_var('QRAIN')
+	    try:
+		qsn=self.variable_dict['QSNOW']
+	    except:
+		qsn=self.get_var('QSNOW')
+	    try:
+		qgr=self.variable_dict['QRGAUP']
+	    except:
+		qgr=self.get_var('QGRAUP')
+	    try:
+		tk=self.variable_dict['TEMP']
+	    except:
+		tk=self.get_var('TEMP')
+	    try:
+		prs=self.variable_dict['PRES']
+	    except:
+		prs=self.get_var('PRES')
+
+	    def compute_rho_dry(rho,tmk, pressure):
+	        rgas=287.04
+	        rho = pressure*100.0/(rgas*tmk)
+
+	        return rho
+
+
+
+	    def compute_rho(rho,tmk, pressure, qvp,nx,ny,nz):
+	        rgas=287.04
+		rho = pressure*100.0/(rgas*(tmk*(0.622+qvp)/(0.622*(1.+qvp))))
+
+		return rho
+
+
+
+
+
+	    in0r=0
+	    in0s=0
+	    in0g=0
+	    iliqskin=0
+	    if (len(n.shape(qvp)) == 4):
+		ntimes=n.shape(qvp)[0]
+		mkzh=n.shape(qvp)[1]
+		mjx=n.shape(qvp)[2]  #NORTH-SOUTH
+		miy=n.shape(qvp)[3]  #WEST-EAST
+
+
+
+	    #need to reorient z x y to x y z
+	    
+	    qvp_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    qnr_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    qra_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    qsn_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    qgr_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    tk_r =n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    prs_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    rho_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
+	    dbz=n.zeros((ntimes,miy,mjx,mkzh),dtype=n.float32)
+
+	    rho=n.zeros((ntimes,miy,mjx,mkzh),dtype=n.float32)
+
+	    rho=compute_rho(rho,tk,prs,qvp,miy,mjx,mkzh)
+	    #rho=compute_rho_dry(rho,tk,prs)
+	    
+	
+
+	    
+	    for ti in range(ntimes):
+		for k in range(mkzh):
+		    rho_r[:,:,k]=n.transpose(rho[ti,k,:,:])
+		    qra_r[:,:,k]=n.transpose(qra[ti,k,:,:])
+		    qsn_r[:,:,k]=n.transpose(qsn[ti,k,:,:])
+		    qgr_r[:,:,k]=n.transpose(qgr[ti,k,:,:])
+		    tk_r[:,:,k]= n.transpose(tk[ti,k,:,:])
+		    prs_r[:,:,k]=n.transpose(prs[ti,k,:,:])
+		    #qvp_r[:,:,k]=n.transpose(qvp[ti,k,:,:])
+
+
+
+
+		print miy,mjx,mkzh
+	        print n.shape(qra_r)
+		print n.shape(qnr_r)
+	        print n.shape(qsn_r)
+	        print n.shape(qgr_r)
+		print n.shape(tk_r)
+	        print n.shape(rho_r)
+		print n.shape(dbz[ti,:,:,:])
+
+#		dbz[ti,:,:,:]=dbzcalc_lin_py      .dbzcalc(qvp_r[:,:,:],qra_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],prs_r[:,:,:],dbz[ti,:,:,:],in0r,in0s,in0g,iliqskin,miy=miy,mjx=mjx,mkzh=mkzh)
+		#dbz[ti,:,:,:]=dbzcalc_thompson_py_ext.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
+		poo=dbzcalc_thompson_py_ext.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
+		print n.shape(poo)
+	    #transpose back
+
+	    dbz_test=poo[6]
+
+	    dbz_thomp=n.zeros((ntimes,mkzh,mjx,miy),dtype=n.float32)
+
+	    for ti in range(ntimes):
+		for k in range(mkzh):
+		    dbz_thomp[ti,k,:,:]=n.transpose(dbz_test[:,:,k])
+
+	    self.variable_dict.update({'dbz_thomp':dbz_thomp})
+
+	    return dbz_thomp
+
+
+
 
 	def calculate_dbz_ferrier(self):
 	    """Calculate simulated radar reflectivity based on Ferrier microphysics
@@ -447,18 +798,6 @@ class calc_vars():
 	    except:
 		C1D=self.get_var('CWM')
 	    try:
-		FI1D=self.variable_dict['F_ICE_PHY'] # F_ice (fraction of condensate in form of ice)
-	    except:
-		FI1D=self.get_var('F_ICE_PHY')
-	    try:
-		FR1D=self.variable_dict['F_RAIN_PHY'] # F_rain (fraction of liquid water in form of rain
-	    except:
-		FR1D=self.get_var('F_RAIN_PHY')
-	    try:
-		FS1D=self.variable_dict['F_RIMEF_PHY'] # F_RimeF ("Rime Factor", ratio of total ice growth to deposition growth)
-	    except:
-		FS1D=self.get_var('F_RIMEF_PHY')
-	    try:
 		QW1=self.variable['QCLOUD'] # QCLOUD
 	    except:
 		QW1=self.get_var('QCLOUD')
@@ -470,6 +809,39 @@ class calc_vars():
 		QI1=self.variable['QSNOW'] # QSNOW
 	    except:
 		QI1=self.get_var('QSNOW')
+
+	    if (self.wrf_core == 'ARW'):
+		try:
+		    FI1D=self.variable_dict['F_ICE_PHY'] # F_ice (fraction of condensate in form of ice)
+		except:
+		    FI1D=self.get_var('F_ICE_PHY')
+		try:
+		    FR1D=self.variable_dict['F_RAIN_PHY'] # F_rain (fraction of liquid water in form of rain
+		except:
+		    FR1D=self.get_var('F_RAIN_PHY')
+		try:
+		    FS1D=self.variable_dict['F_RIMEF_PHY'] # F_RimeF ("Rime Factor", ratio of total ice growth to deposition growth)
+		except:
+		    FS1D=self.get_var('F_RIMEF_PHY')
+
+	    elif (self.wrf_core == 'NMM'):
+		try:
+		    FI1D=self.variable_dict['F_ICE'] # F_ice (fraction of condensate in form of ice)
+		except:
+		    FI1D=self.get_var('F_ICE')
+		try:
+		    FR1D=self.variable_dict['F_RAIN'] # F_rain (fraction of liquid water in form of rain
+		except:
+		    FR1D=self.get_var('F_RAIN')
+		try:
+		    FS1D=self.variable_dict['F_RIMEF'] # F_RimeF ("Rime Factor", ratio of total ice growth to deposition growth)
+		except:
+		    FS1D=self.get_var('F_RIMEF')
+	    else:
+		print 'microhpysics variables not found, check for F_ICE, FRAIN,F_RIMEF'
+		return None
+
+
 
 	    # Read in MASSR and MASSI arrays from text files
 	    # The text files are from ETAMPNEW_DATA 
@@ -500,15 +872,119 @@ class calc_vars():
 	    NLICE1	=n.zeros((mjx,miy),dtype=n.float32)	# Time-averaged number concentration of large ice
 	    CUREFL	=n.zeros((mjx,miy),dtype=n.float32)	# Radar reflectivity contribution from convection (mm**6/m**3)
 
+	    im = mjx
+	    jm = miy
 
 	    for ti in range(ntimes):
 		for k in range(mkzh):
 		     #Tdbz[ti,k,:,:], Rdbz[ti,k,:,:], Idbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],T1D[ti,k,:,:],Q1D[ti,k,:,:],C1D[ti,k,:,:],FI1D[ti,k,:,:],FR1D[ti,k,:,:],FS1D[ti,k,:,:],CUREFL,QW1[ti,k,:,:],QI1[ti,k,:,:],QR1[ti,k,:,:],QS1,DBZ1,DBZR1,DBZI1,DBZC1,NLICE1,miy,mjx,MASSR,MASSI)
-		     Tdbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],T1D[ti,k,:,:],Q1D[ti,k,:,:],C1D[ti,k,:,:],FI1D[ti,k,:,:],FR1D[ti,k,:,:],FS1D[ti,k,:,:],CUREFL,QW1[ti,k,:,:],QI1[ti,k,:,:],QR1[ti,k,:,:],QS1,DBZ1,DBZR1,DBZI1,DBZC1,NLICE1,miy,mjx,MASSR,MASSI)
+
+		     Tdbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],T1D[ti,k,:,:],Q1D[ti,k,:,:],C1D[ti,k,:,:],FI1D[ti,k,:,:],FR1D[ti,k,:,:],FS1D[ti,k,:,:],CUREFL,QW1[ti,k,:,:],QI1[ti,k,:,:],QR1[ti,k,:,:],QS1,DBZ1,DBZR1,DBZI1,DBZC1,NLICE1,miy,mjx,MASSR,MASSI,im,jm)
 
 	    self.variable_dict.update({'dbz_ferrier':Tdbz})
 	    
 	    return Tdbz #, Rdbz, Idbz
+
+
+	def compute_height(self):
+	    """Calculate geopotential height (3d) in meters from surace geopotient 
+	    this is based on the hypsometer equation which is
+	     Z_2 = Z_1 + (R_T_v/g)*[log(p_1) - log(p_2)] 
+	     and only technicaly valid for hydrostatic balance
+	     use this only for the NMM core case they do not give you geopotential height.
+	     
+
+	    Inputs:
+	    -------
+		None: will get the variables it needs itself
+	    Returns:
+	    -------
+		geopotential height in meters (I think)
+	
+	    Notes:
+	    ------
+		Only technicaly valid for hydrostatic balance, I may add further.
+		Simon change this when you add non-hydro support.
+		(even if non-hydro just use it for now cause it will be close enough)
+	    """
+	    
+	    try:
+		#print 'getting the unstaggered version of PINT'
+		prs=self.niofile.variables['PINT'].get_value()
+	    except:
+		print 'cannt fint your variable PINT'
+	    try:
+		ter=self.variable['FIS']/9.81 # Terrain height = surface geopotential height/9.81
+	    except:
+		ter=self.get_var('FIS')/9.81
+
+	    try:
+		vtmk=self.compute_vtmk()
+	    except:
+		print 'could not calculate virtual temperature'
+		return  None
+
+
+	    #using the hypsometer equation which is
+	    # Z_2 - Z_1 = (R*T_v/g)*log(p_1/p_2)
+	    # Z_2 = Z_1 + (R_T_v/g)*[log(p_1) - log(p_2)] 
+	    
+	    #fix up geopotential height at broken points
+	    ter=n.where(ter < 0,0,ter)
+	    
+
+
+	    # Set up grid (vertical levels = mkzh, NSdim = y = miy, WEdim = x = mjx, ) 
+	    if (len(n.shape(prs)) == 4):
+		ntimes=n.shape(prs)[0]
+		mkzh=n.shape(prs)[1]-1
+		mjx=n.shape(prs)[2]   # NS-DIMENSION
+		miy=n.shape(prs)[3]   # WE-DIMENSION
+
+
+	    log_p=n.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
+	    base_level=n.zeros((ntimes,mjx,miy), dtype="float")
+	    ght=n.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
+	
+
+	    for ti in range(ntimes):
+	        for k in range(mkzh+1):
+		   log_p[ti,k,:,:]=n.log(prs[ti,k,:,:])
+
+
+	    rgas=287.04
+	    grav=9.81
+
+
+	    for ti in range(ntimes):
+		ght[ti,0,:,:] = ter[ti,:,:]
+	        for k in range(1, mkzh+1):
+		    tv_average=(vtmk[ti,k-1,:,:]) # not doing average for some reason
+		    ght[ti,k,:,:]  = ght[ti,k-1,:,:] + ((rgas*tv_average)/grav)*(log_p[ti,k-1,:,:] - log_p[ti,k,:,:])
+
+
+	    #now we have ght on staggared levels, we must destagger
+
+	    ght_destag=n.zeros((ntimes,mkzh,mjx,miy), dtype="float")
+
+	    for ti in range(ntimes):
+		for k in range(mkzh):
+		    ght_destag[ti,k,:,:] = 0.5*( ght[ti,k,:,:] + ght[ti,k+1,:,:] )
+
+		    
+	    self.variable_dict.update({'GHT':ght_destag})
+	    
+	    return ght_destag 
+
+
+	def compute_extrema(self,mat,mode='wrap',window=10):
+	    from scipy.ndimage.filters import maximum_filter, minimum_filter
+	    """find the indicies of local extrema (min and max
+	    in the local array. """
+	    mn=minimum_filter(mat,size=window,mode=mode)
+	    mx=maximum_filter(mat,size=window,mode=mode)
+	    return n.nonzero(mat == mn), n.nonzero(mat==mx)
+
 
 
 	def write_netcdf_file(self,input_variable,var_name,directory='.',filename='new_output', var_dim=('T','BT','SN','WE'), var_type='f'):
@@ -717,17 +1193,24 @@ class wrf_plots():
 	#except KeyError:
 
 	if (lat == None) | (lon == None):
-	    try:
-		lon=self.get_var('XLONG')
-		lat=self.get_var('XLAT')
-	    except ValueError:
-		print 'Cant find your lat/long data, checking if you are using met_em files'
-		lon=self.get_var('XLONG_M')
-		lat=self.get_var('XLAT_M')
-		print 'yes you are using met_em files'
-
-
-
+	    if self.wrf_core == 'ARW':
+		try:
+		    lon=self.get_var('XLONG')
+		    lat=self.get_var('XLAT')
+		except ValueError:
+		    print 'Cant find your lat/long data, checking if you are using met_em files'
+		    lon=self.get_var('XLONG_M')
+		    lat=self.get_var('XLAT_M')
+		    print 'yes you are using met_em files'
+	    elif self.wrf_core == 'NMM':
+ 		try:
+		    glon=self.get_var('GLON')
+		    glat=self.get_var('GLAT')
+		    lon=glon*57.2957795
+		    lat=glat*57.2957795
+		    print "found GLON AND GLAT"
+		except ValueError:
+		    print "GLON AND GLAT NOT FOUND"
 
         cen_lat	=self.niofile.CEN_LAT[0]
 	cen_lon	=self.niofile.CEN_LON[0]
@@ -736,15 +1219,21 @@ class wrf_plots():
 	if (map_proj == 1):
 	    print 'your map projection is Lambert Conformal'
 	    proj = 'lcc'
-	if (map_proj == 2):
+	elif (map_proj == 2):
 	    print 'your map projection is Polar stereographic'
 	    print 'assuming north pole (not tested this projection type, fix if you use it'
 	    proj = 'npstere'
-	if (map_proj == 3):
+	elif (map_proj == 3):
 	    print 'your map projection is Mercator'
 	    proj = 'merc'
+	elif (map_proj == 203):
+	    print 'your map projection is rotated lat/long'
+	    print 'using lcc projection for testing'
+	    proj = 'lcc'
 
-
+	else:
+	    print 'map projection not known, quitting'
+	    return
 
 
 	m=basemap.Basemap(projection=proj,llcrnrlon=lon[0,0,0],llcrnrlat=lat[0,0,0],urcrnrlon=lon[0,-1,-1],urcrnrlat=lat[0,-1,-1],lat_0=cen_lat,lon_0=cen_lon,resolution='h')
@@ -754,12 +1243,22 @@ class wrf_plots():
 	self.map_y=y
 	#return m,x,y
 
-    def map_lines(self):
+    def map_lines(self,map_proj=None,nlines=10.,coast=True):
 	"""This is intended to be a semi-smart function that will determine how
 	many lat/lon lines should be draw on your map (and plots coast lines)
 	Inputs:
 	 -------
 	     None. Function uses basemap, so will call bmap() if it is not realdy called'
+	Optional inputs:
+	     Modified so that you can input basemap projection m
+	     i.e.e self.bmap() --> self.map_proj
+	     this is included because calculating this takes a lot of work, thus if
+	     you are looping through files, you want to calculate this only once at
+	     the start, then input your value to the function later to avoid doubling up
+	     on work
+
+	     coast=True or False. default True,
+	     determines whether or not you want the coast lines drawn
 
 	 Returns:
 	  -------
@@ -769,40 +1268,55 @@ class wrf_plots():
 	Example:
 	"""
 	#has basemap been called before?
-	try:
-	    m=self.map_proj
-	except:
-	    self.bmap()
-	    m=self.map_proj
-
+	if (map_proj == None):
+	    try:
+		m=self.map_proj
+	    except:
+		self.bmap()
+		m=self.map_proj
+	else:
+	    m=map_proj
 
 
 
 
 	#need to determine how what the grid spacing should be for your map
-	try:
-	    lat_min=n.min(self.variable_dict['XLAT'])
-	except:
-	    self.get_var('XLAT')
-	    lat_min=n.min(self.variable_dict['XLAT'])
+	if self.wrf_core == 'ARW':
+	    lat_var='XLAT'
+	    lon_var='XLONG'
+	elif self.wrf_core == 'NMM':
+	    lat_var='GLAT'
+	    lon_var='GLON'
+	    
 
 	try:
-	    lon_min=n.min(self.variable_dict['XLONG'])
+	    lat_min=n.min(self.variable_dict[lat_var])
 	except:
-	    self.get_var('XLONG')
-	    lon_min=n.min(self.variable_dict['XLONG'])
+	    self.get_var(lat_var)
+	    lat_min=n.min(self.variable_dict[lat_var])
 
-	lat_max=n.max(self.variable_dict['XLAT'])
-	lon_max=n.max(self.variable_dict['XLONG'])
+	try:
+	    lon_min=n.min(self.variable_dict[lon_var])
+	except:
+	    self.get_var(lon_var)
+	    lon_min=n.min(self.variable_dict[lon_var])
+
+	lat_max=n.max(self.variable_dict[lat_var])
+	lon_max=n.max(self.variable_dict[lon_var])
 
 	lat_range= lat_max-lat_min
 	lon_range= lon_max-lon_min
 
+	if (self.wrf_core == 'NMM'):
+	    lat_range=lat_range*57.2957795
+	    lon_range=lon_range*57.2957795
+
+
     
 	#going to assume we should have no more than 10 lines in each direction
 	#and that we want lines either 1 deg, 5deg, 10deg, 20deg etc
-	del_lat=lat_range/10.
-	del_lon=lon_range/10.
+	del_lat=lat_range/nlines
+	del_lon=lon_range/nlines
 
 
 	spacing_array=n.array([0.5,1.0,5.0,10.0,20.0],dtype='float')
@@ -818,7 +1332,8 @@ class wrf_plots():
 
 
 
-	m.drawcoastlines()
+	if coast:
+	    m.drawcoastlines()
 	circles = n.arange(0.,90.+delat,delat).tolist()+\
 	    n.arange(-delat,-90.-delat,-delat).tolist()
 	m.drawparallels(circles,labels=[1,0,0,0],fontsize=10.)
@@ -929,7 +1444,7 @@ class wrf_plots():
 	pl.savefig(self.plot_directory+'/'+imagename)
 
 
-    def plot_winds(self,U,V,strip=10,imagename='winds.png'):
+    def plot_winds(self,U,V,strip=10,imagename='winds.png',clearfig='yes'):
 	"""plot  2-d wind barbs 
 	Inputs:
 	---------
@@ -942,6 +1457,7 @@ class wrf_plots():
 	     i.e. if strip = 10 then every 10th barb will be shown (default)
 	     imagename = 'your file name.png', defaults to winds.png'
 	     title = 'your title' defaults to none
+	     clearfig = 'yes'/'no', the default is yes
 
 	    Returns:
 	    --------
@@ -973,6 +1489,8 @@ class wrf_plots():
 		u_stripped[i,j]=U[i,j]
 		v_stripped[i,j]=V[i,j]
 
+
+
 	try:
 	    m=self.map_proj
 	except:
@@ -984,15 +1502,18 @@ class wrf_plots():
 	    lat=self.variable_dict['XLAT']
 	    lon=self.variable_dict['XLONG']
 	except KeyError:
-	    lat=self.get_var['XLAT']
-	    lon=self.get_var['XLONG']
+	    lat=self.get_var('XLAT')
+	    lon=self.get_var('XLONG')
 
 
 	urot,vrot,x,y = m.rotate_vector(u_stripped,v_stripped,lon[0,:,:],lat[0,:,:], returnxy=True)
 
-	pl.figure(11,figsize=(16,8))
-	#pl.clf()
-	Q=m.quiver(x,y,urot,vrot, units='width', scale=100.0, width=0.001,headwidth=10, color='r')
+	#pl.figure(11,figsize=(16,8))
+	pl.figure(11)
+	if (clearfig == 'yes'):
+	   pl.clf()
+	
+	Q=m.quiver(x,y,urot,vrot, units='width', scale=500.0, width=0.001,headwidth=3, color='r')
 	QK=pl.quiverkey(Q,0.91,1.05,5,'5 m/s', labelpos='W', fontproperties={'weight':'bold'})
 
 
@@ -1130,7 +1651,7 @@ class wrf_plots():
 	    del(cappi)
 
 
-
+	
     
 
     def plot_precip(self,imagename='precip.png', title='',timestep=0):
@@ -1145,7 +1666,6 @@ class wrf_plots():
 	    Returns:
 	    --------
 		contour plot of accumulated precipitaiton
-	
 	"""
 
 	pl.figure(6)
@@ -1234,6 +1754,142 @@ class wrf_plots():
 	    pl.savefig(self.plot_directory+'/'+imagename)
 
 
+    def plot_mslp(self,imagename='mslp.png', title='',timestep=0):
+	"""plot  mean sea level pressure
+	Optional input:
+	     --------
+	     imagename = 'your file name.png', defaults to mslp.png'
+	     title = 'your title' defaults to none
+	     timestep = integer. If there are multiple time periods per file then
+	     choose your timestep, defaults to 0'
+
+	    Returns:
+	    --------
+		contour plot of mean sea level pressures with Highs and Lows
+		labeled 
+	"""
+
+	pl.figure(7)
+	pl.clf()
+
+	times=self.get_var('Times')
+
+	if (timestep == 0):
+	    start_time =0
+	    end_time = len(times)
+	else:
+	    start_time=timestep
+	    end_time=timestep+1
+
+	try:
+	    m=self.map_proj
+	    x=self.map_x
+	    y=self.map_y
+	except:
+	    self.bmap()
+	    m=self.map_proj
+	    x=self.map_x
+	    y=self.map_y
+
+	mslp=self.compute_mslp()
+
+
+	local_min,local_max=self.compute_extrema(mslp,mode='constant',window=50)
+
+	#    out_dir='/home/simon/model_simulations/plots/plots_arw/pres/'
+	#    if (os.path.isdir(out_dir) == False):
+	#	os.system("mkdir -p "+out_dir)
+	
+	#    the_time= wrf_out[11:]
+	clevs=n.arange(900,1100,5)
+        cs=  m.contour(x,y,mslp[:,:],clevs,colors='k', linewidths=1.0)
+	pl.clabel(cs,inline=1,fontsize=8,fmt='%4.0f')
+        self.map_lines(map_proj=m,coast=False)
+	m.fillcontinents(color='orange',alpha=0.3)
+        m.drawcoastlines(color='orange',linewidth=0.5)
+
+	xlows  	=x[local_min]
+        xhighs 	=x[local_max]
+	ylows  	=y[local_min]
+        yhighs	=y[local_max]
+        lowvals	=mslp[local_min]
+        highvals	=mslp[local_max]
+        #plot lows as blue L's with min pressure value underneith
+        xyplotted=[]
+        #dont plot if there is already a L or H within dmin meters
+        yoffset=0.022*(m.ymax-m.ymin)
+	dmin=yoffset
+        xlen=(m.xmax-m.xmin)*0.022
+        ylen=(m.ymax-m.ymin)*0.022
+	dmin=max(xlen,ylen)
+
+        #need to order low values and high values so that the lowest and the highest get plotted
+
+        switch=1
+	while switch == 1:
+	    switch =0
+	    for lval in range(len(lowvals)-1):
+		if lowvals[lval] > lowvals[lval+1]:
+		    new_lval=lowvals[lval+1]
+		    new_xval=xlows[lval+1]
+		    new_yval=ylows[lval+1]
+
+		    lowvals[lval+1]=lowvals[lval]
+		    xlows[lval+1]=xlows[lval]
+		    ylows[lval+1]=ylows[lval]
+
+		    lowvals[lval]=new_lval
+		    xlows[lval]=new_xval
+		    ylows[lval]=new_yval
+		    switch = 1
+
+
+
+        switch=1
+	while switch == 1:
+	    switch =0
+	    for hval in range(len(highvals)-1):
+		if highvals[hval] < highvals[hval+1]:
+		    new_hval=highvals[hval+1]
+		    new_xval=xhighs[hval+1]
+		    new_yval=yhighs[hval+1]
+
+		    highvals[hval+1]=highvals[hval]
+		    xhighs[hval+1]=xhighs[hval]
+		    yhighs[hval+1]=yhighs[hval]
+
+		    highvals[hval]=new_hval
+		    xhighs[hval]=new_xval
+		    yhighs[hval]=new_yval
+		    switch = 1
+
+
+        for xx,yy,pp in zip(xlows,ylows,lowvals):
+	    if xx < m.xmax and xx > m.xmin and yy < m.ymax and yy > m.ymin:
+		dist=[n.sqrt((xx-x0)**2+(yy-y0)**2) for x0,y0, in xyplotted]
+		if not dist or min(dist) > dmin:
+		    pl.text(xx,yy,'L',fontsize=14,fontweight='bold',ha='center',va='center',color='b')
+		    pl.text(xx,yy-yoffset,repr(int(pp)), fontsize=9,ha='center',va='top',color='b',bbox= dict(boxstyle='square',ec='None',fc=(1,1,1,0.5)))
+		    xyplotted.append((xx,yy))
+
+        #plot highs as red H's with max pressure value underneight
+    #    xyplotted=[]
+	for xx,yy,pp in zip(xhighs,yhighs,highvals):
+	    if xx<m.xmax-dmin and xx>m.xmin+dmin and yy < m.ymax-dmin and yy >m.ymin+dmin:
+		dist=[n.sqrt((xx-x0)**2+(yy-y0)**2) for x0,y0 in xyplotted]
+		if not dist or min(dist) > dmin:
+		    pl.text(xx,yy,'H',fontsize=14,fontweight='bold',ha='center',va='center',color='r')
+		    pl.text(xx,yy-yoffset,repr(int(pp)), fontsize=9,ha='center',va='top',color='r',bbox= dict(boxstyle='square',ec='None',fc=(1,1,1,0.5)))
+		    xyplotted.append((xx,yy))
+
+
+	pl.title(title)
+
+	pl.savefig(self.plot_directory+'/'+imagename)
+
+
+
+
 
 		    
 	
@@ -1242,6 +1898,7 @@ class wrf_file(calc_vars, wrf_plots):
     Variables should automatically have perturbations and base-states combined, returning the full fields 
     Variables that require it should automatically be destaggared on to a normal grid. 
     Some variables that are not standard output from the WRF model will be calculated behind the seens.
+    Check to see if WRF NMM or ARW core is being used, this will then change how some of the later modules work.
     """
     def __init__(self,filename=None):
 	self.filename=filename
@@ -1262,6 +1919,14 @@ class wrf_file(calc_vars, wrf_plots):
 	try:
 	    wrf_file=Nio.open_file(self.filename,'r')
 	    self.niofile=wrf_file
+
+	    if (self.niofile.variables.keys().count('DX_NMM') >=1):
+		print 'Found variable DX_NMM, assuming you are running the NMM core'
+		self.wrf_core='NMM'
+	    else:
+		print 'DX_NMM not found, assuming you are running the ARW core'
+		self.wrf_core='ARW'
+
 	except:
 	    print '\n \n \n \n SOMETHING WENT WRONG.\n This is likely because your file path is incorrect \n   please try again'
 	    self.niofile=None
@@ -1280,8 +1945,17 @@ class wrf_file(calc_vars, wrf_plots):
 	Note that some of these variables will be derived"""
 
 	if self.niofile:
-	    pert_vars=perturbation_variables.pert_variable_dict
-	    calc_vars=perturbation_variables.calc_variable_dict
+	    print self.wrf_core
+	    if self.wrf_core=='ARW':
+	        pert_vars=perturbation_variables.pert_variable_dict_ARW
+		calc_vars=perturbation_variables.calc_variable_dict_ARW
+	    elif self.wrf_core=='NMM': 
+	        pert_vars=perturbation_variables.pert_variable_dict_NMM
+		calc_vars=perturbation_variables.calc_variable_dict_NMM
+	    else:
+		print "wrf core type not found, you should be using either ARW or NMM"
+		exit()
+
 
 	    print "you can extract the following variables\n"
 	    var_list=self.niofile.variables.keys()#+calc_vars.keys()+pert_vars.keys()
@@ -1447,10 +2121,16 @@ class wrf_file(calc_vars, wrf_plots):
 	#import perturbation_variables
 
 
+        if self.wrf_core=='ARW':
+	    pert_vars=perturbation_variables.pert_variable_dict_ARW
+	    calc_vars=perturbation_variables.calc_variable_dict_ARW
+	elif self.wrf_core=='NMM': 
+            pert_vars=perturbation_variables.pert_variable_dict_NMM
+	    calc_vars=perturbation_variables.calc_variable_dict_NMM
+	else:
+	    print "wrf core type not found, you should be using either ARW or NMM"
+	    exit()
 
-
-	pert_vars=perturbation_variables.pert_variable_dict
-	calc_vars=perturbation_variables.calc_variable_dict
 
 	if (var in pert_vars.keys()):
 	    data_array, stag = self._full_variable(pert_vars[var],var)
@@ -1485,7 +2165,12 @@ class wrf_file(calc_vars, wrf_plots):
 
 	    if stag == "":
 		stag = '-'
-
+    
+	    if self.wrf_core == 'NMM':
+	#	print 'ASSUMING ALL NMM HORIZONTAL VARIABLES ARE NOTSTAGGERED, NOT SURE IF THIS IS CORRECT'
+		if stag !='Z':
+		    stag="-"
+		
 
 
 	    #try:
@@ -1497,18 +2182,18 @@ class wrf_file(calc_vars, wrf_plots):
 			data_array , stag= self.get_var_multi_cpu(self.wrf_directory,self.filename,var,stag=stag)
 			if (stag != '-'):
 			    print 'Your variable', var, ' is now being de-staggered\n'
-			    data_array=    wrf_user_unstagger.wrf_user_unstagger(data_array,stag)
+			    if self.wrf_core == 'ARW':
+				data_array=    wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
+			    elif self.wrf_core == 'NMM':
+				data_array=    wrf_user_unstagger.wrf_user_unstagger_NMM(data_array,stag)
+			    else:
+				print 'Error: WRF core not known, should be either ARW or NMM'
 
 			return data_array
 		    elif(self.filename[-8] == '_') & (multi == True):
 			pass
 		    else:
-			#print multi
-			#print self.filename
 			pass
-	    #except:
-	#	pass
-
 #
 
 
@@ -1520,8 +2205,14 @@ class wrf_file(calc_vars, wrf_plots):
 
 
 	if (stag != '-'):
-		print 'Your variable', var, ' is now being de-staggered\n'
-		data_array=    wrf_user_unstagger.wrf_user_unstagger(data_array,stag)
+	    print 'Your variable', var, ' is now being de-staggered\n'
+	    if self.wrf_core == 'ARW':
+		data_array=    wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
+	    elif self.wrf_core == 'NMM':
+		data_array=    wrf_user_unstagger.wrf_user_unstagger_NMM(data_array,stag)
+	    else:
+		print 'Error: WRF core not known, should be either ARW or NMM'
+
 
 	
 	#variables should alredy be destaggared by this point because calc works on variable already recieved.
@@ -1529,22 +2220,48 @@ class wrf_file(calc_vars, wrf_plots):
 	    for dependant_variable in calc_vars[var]:
 		if (self.variable_dict.has_key(dependant_variable) == False):
 		    print 'also need to extract/calculate', dependant_variable, ' if you want to calculate',var, ' doing this now\n'
-		    self.get_var(dependant_variable,multi=False)
-	    if (var == 'TEMP'):
+		    data_array = self.get_var(dependant_variable,multi=False)
+		else:
+		    data_array = self.variable_dict[dependant_variable]
+
+	    if (var == 'TEMP') & (self.wrf_core == 'ARW'):
 		data_array= self.compute_tk(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
+	    elif(var == 'TEMP') & (self.wrf_core == 'NMM'):
+		data_array=self.variable_dict['T']
+
 	    if (var == 'RH'):
 		data_array= self.compute_rh(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]],self.variable_dict[calc_vars[var][2]])
 	    if (var == 'TD'):
 		data_array= self.compute_td(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
 	    if (var == 'PRES'):
+
 		data_array= data_array/100.
 	    if (var == 'Z'):
-		print 'dividing PHB+PH by 9.81 to give height in m'
-		data_array= data_array/9.81
+		if self.wrf_core == 'ARW':
+		    print 'dividing geopotential by 9.81 to give height in m'
+		    data_array= data_array/9.81
+		elif self.wrf_core == 'NMM':
+		    data_array= self.compute_height()
+		else:
+		    print 'cant find your wrf core (should be ARW or NMM)'
+
 	    if (var == 'SPH'):
 		data_array= self.compute_sph(self.variable_dict[calc_vars[var][0]])
 	  
+	    if (var == 'VTMK'):
+		data_array= self.compute_vtmk()
 
+	    if (self.wrf_core == 'NMM'):
+		if (var == 'XLONG'):
+		    print 'you asked for XLONG but are using the NMM core, I will give you GLON as XLONG so that code still works'
+		    data_array=self.get_var('GLON')
+		    data_array=data_array*57.2957795
+
+		if (var == 'XLAT'):
+		    print 'you asked for XLAT but are using the NMM core, I will give you GLAT as XLAT so that code still works'
+		    data_array=self.get_var('GLAT')
+		    data_array=data_array*57.2957795
+	
 
 	if (var == 'Times'):
 	    try:
@@ -1707,7 +2424,6 @@ class wrf_file(calc_vars, wrf_plots):
 	None: However, dimension dictionary now assosicated with your wrf_file object
 	dictionary is named  yourfile.dims
 
-
 	"""
 	dims=self.niofile.dimensions
 	self.dims=dims
@@ -1726,7 +2442,6 @@ class wrf_file(calc_vars, wrf_plots):
 	Returns:
 	None: However, dimension dictionary now assosicated with your wrf_file object
 	dictionary is named yourfile.atts
-
 
 	"""
 	atts=self.niofile.attributes

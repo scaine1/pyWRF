@@ -1,6 +1,6 @@
       SUBROUTINE CALMICT(P1D,T1D,Q1D,C1D,FI1D,FR1D,FS1D,CUREFL,     &
                         QW1,QI1,QR1,QS1,DBZ1,DBZR1,DBZI1,DBZC1,     &
-                        NLICE1,NSDIM,WEDIM,MASSR,MASSI)
+                        NLICE1,NSDIM,WEDIM,MASSR,MASSI,im,jm)
 !
 !
 !
@@ -113,7 +113,7 @@
 !
 !     jm = WEdim and im=NSdim --> in pyWRF miy = WEdim and mjx=NSdim
       integer, intent(in) :: nsdim, wedim 
-      integer, parameter :: im=294, jm=333
+      integer, intent(in) :: im,jm
       
       INTEGER INDEXS, INDEXR
       REAL, PARAMETER :: Cice=1.634e13, DBZmin=-20., RD=287.04,   &
