@@ -395,8 +395,16 @@ class calc_vars():
 		    lower_lon=user_lon-del_lon
 
 
-		    lat_ij=n.where((lat_array[0,:,:] < upper_lat) & (lat_array[0,:,:] >= lower_lat),1,0)
-		    lon_ij=n.where((long_array[0,:,:] > lower_lon) & (long_array[0,:,:] <= upper_lon),1,0)
+		    if (len(n.shape(lat_array)) == 3):
+			lat_ij=n.where((lat_array[0,:,:] < upper_lat) & (lat_array[0,:,:] >= lower_lat),1,0)
+			lon_ij=n.where((long_array[0,:,:] > lower_lon) & (long_array[0,:,:] <= upper_lon),1,0)
+
+		    elif (len(n.shape(lat_array)) == 2):
+			lat_ij=n.where((lat_array[:,:] < upper_lat) & (lat_array[:,:] >= lower_lat),1,0)
+			lon_ij=n.where((long_array[:,:] > lower_lon) & (long_array[:,:] <= upper_lon),1,0)
+		    else:
+			pass
+
 
 		    i,j = n.where((lat_ij == 1) & (lon_ij==1))
 
@@ -501,6 +509,61 @@ class calc_vars():
 		output_variable=n.zeros((len(height_levels)),dtype=n.float32)
 
 		output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:])
+
+	    return output_variable
+
+
+	def interp_to_pressure(self,pres_levels, pres_on_model_levels,input_variable):
+	    """interpolate your data from model levels to a given set of pressure levels
+	    Note that this is just a test and might be buggy, check the code and use at own risk
+	    simon made this when tired.
+	    Inputs:
+	    -------
+	    pres_levels (in meters, 1-D vector)
+	    prest_on_model_levels  
+	    input_variable  (which ever variable you wish to interpolate)
+
+	    Returns:
+	    -------
+	    Your variable interpolated to constant given pressure
+	
+	
+	    Notes:
+	    ------
+	    Assuming the following dimensions  
+	    4 dimensions = (time, bottom_top,sound_north, west_east)
+	
+	    """
+
+
+	    if (len(n.shape(input_variable)) == 4):
+		ti_dim=n.shape(input_variable)[0]
+		hi_dim=n.shape(input_variable)[1]
+		sn_dim=n.shape(input_variable)[2]
+		we_dim=n.shape(input_variable)[3]
+		output_variable=n.zeros((ti_dim,len(pres_levels),sn_dim,we_dim),dtype=n.float32)
+		input_variable_rev=n.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=n.float32)
+		pres_on_model_levels_rev=n.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=n.float32)
+
+
+		for ti in range(ti_dim):
+		    for k in range(hi_dim):
+			pres_on_model_levels_rev[ti,hi_dim -1 - k,:,:] = pres_on_model_levels[ti,k,:,:]
+			input_variable_rev[ti,hi_dim -1 - k,:,:] = input_variable[ti,k,:,:]
+	    
+		for the_time in range(ti_dim):
+		    for i in range(sn_dim):
+			for j in range(we_dim):
+			    output_variable[the_time,:,i,j] = s.interp(pres_levels[:],pres_on_model_levels_rev[the_time,:,i,j],input_variable_rev[the_time,:,i,j])
+
+
+		
+
+
+	    if (len(n.shape(input_variable)) == 1):
+		hi_dim=n.shape(input_variable)[0]
+		output_variable=n.zeros((len(pres_levels)),dtype=n.float32)
+		output_variable[:] = s.interp(pres_levels[:],pres_on_model_levels[:],input_variable[:])
 
 	    return output_variable
 	
@@ -631,7 +694,8 @@ class calc_vars():
 	    """
 
 	    try:
-	        import dbzcalc_thompson_py_ext
+	        #import dbzcalc_thompson_py_ext
+	        import dbzcalc_thompson_py
 	    except:
 		print 'cannot import dbzcalc_thompson_py_ext please run f2py on fortran file'
 		print 'reflectivity functions for Thompson scheme will not be available untill you do this'
@@ -736,11 +800,14 @@ class calc_vars():
 
 #		dbz[ti,:,:,:]=dbzcalc_lin_py      .dbzcalc(qvp_r[:,:,:],qra_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],prs_r[:,:,:],dbz[ti,:,:,:],in0r,in0s,in0g,iliqskin,miy=miy,mjx=mjx,mkzh=mkzh)
 		#dbz[ti,:,:,:]=dbzcalc_thompson_py_ext.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
-		poo=dbzcalc_thompson_py_ext.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
+		#poo=dbzcalc_thompson_py_ext.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
+		poo=dbzcalc_thompson_py.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
 		print n.shape(poo)
 	    #transpose back
-
-	    dbz_test=poo[6]
+	    
+#	    dbz_test=poo[6]
+	    dbz_test=poo#[6]
+	    print n.shape(dbz_test)
 
 	    dbz_thomp=n.zeros((ntimes,mkzh,mjx,miy),dtype=n.float32)
 
@@ -1139,7 +1206,7 @@ class wrf_plots():
 	self.bmap()
 	pass
 
-    def bmap(self,lat=None,lon=None):
+    def bmap(self,lat=None,lon=None,proj='lcc'):
 	"""create map projection and transform lat and long values to x and y
 	Inputs:
 	 -------
@@ -1217,19 +1284,26 @@ class wrf_plots():
 	map_proj=self.niofile.MAP_PROJ[0]
 
 	if (map_proj == 1):
-	    print 'your map projection is Lambert Conformal'
-	    proj = 'lcc'
+	    print 'your input data has map projection of Lambert Conformal'
+	    #proj = 'lcc'									#testing, default call with nothing is llc, else proj is user defined
+	    print 'using plotting projection of ' +proj
+
 	elif (map_proj == 2):
-	    print 'your map projection is Polar stereographic'
+	    print 'your input data has amap projection of Polar stereographic'
 	    print 'assuming north pole (not tested this projection type, fix if you use it'
-	    proj = 'npstere'
+	    proj = 'npstere'										#testing, default call with nothing is llc, else proj is user defined
+	    #print 'using projection ' +proj
+
 	elif (map_proj == 3):
-	    print 'your map projection is Mercator'
-	    proj = 'merc'
+	    print 'your input data has a map projection of Mercator'
+	    #proj = 'merc'										#testing, default call with nothing is llc, else proj is user defined
+	    print 'using plotting projection of ' +proj
+
+
 	elif (map_proj == 203):
-	    print 'your map projection is rotated lat/long'
-	    print 'using lcc projection for testing'
-	    proj = 'lcc'
+	    print 'your input data has a  map projection of rotated lat/long'
+	    print 'using plotting  projection of '+proj
+	    #proj = 'lcc'											#testing, default call with nothing is llc, else proj is user defined
 
 	else:
 	    print 'map projection not known, quitting'
@@ -1365,8 +1439,8 @@ class wrf_plots():
 	    your lat/long
 
 	"""
-	pl.figure(1)
-	import skewt as skewt
+	fig_skewt=pl.figure(figsize=(6,8))
+	import skewt_old as skewt
 	try:
 	    pres=self.variable_dict['PRES']
 	except:
@@ -1393,6 +1467,8 @@ class wrf_plots():
 	    v=self.get_var('V')
 
 	skewt.draw_skewt(pres[timestep,:,i,j],height[timestep,:,i,j],temp_c[timestep,:,i,j],td[timestep,:,i,j],u[timestep,:,i,j],v[timestep,:,i,j],imagename=self.plot_directory+'/'+imagename,title=title)
+
+	fig_skewt.clf()
 
     def plot_vapor(self,imagename='vapor.png', title='',timestep=0):
 	"""plot  qvapor
@@ -1508,6 +1584,7 @@ class wrf_plots():
 
 	urot,vrot,x,y = m.rotate_vector(u_stripped,v_stripped,lon[0,:,:],lat[0,:,:], returnxy=True)
 
+	print x
 	#pl.figure(11,figsize=(16,8))
 	pl.figure(11)
 	if (clearfig == 'yes'):
@@ -1899,6 +1976,8 @@ class wrf_file(calc_vars, wrf_plots):
     Variables that require it should automatically be destaggared on to a normal grid. 
     Some variables that are not standard output from the WRF model will be calculated behind the seens.
     Check to see if WRF NMM or ARW core is being used, this will then change how some of the later modules work.
+    Adding grib support. I currently assume that if you are using grb files, they have been generated with UPP
+    and therefore already destagged and you have calculated variables that you want.
     """
     def __init__(self,filename=None):
 	self.filename=filename
@@ -1907,10 +1986,39 @@ class wrf_file(calc_vars, wrf_plots):
 	import sys as sys
 	sys.path.append('wrf_plots/')
 
-	if (filename[-3:] != '.nc'):
+	if (filename.count('wrfout')==1) & (filename[-3:] != '.nc'):
 	    self.filename=str(self.filename+'.nc')
+	    self.file_type='nc'
+	if (filename.count('dbz_d0')==1) & (filename[-3:] != '.nc'):
+	    self.filename=str(self.filename+'.nc')
+	    self.file_type='nc'
 
-	if (self.filename.find('wrfout') == 0):
+	if (filename.count('WRFPRS')==1) & (filename[-4:] != '.grb'):
+	    self.filename=str(self.filename+'.grb')
+	    self.file_type='grb'
+	    self.wrf_core="NULL"#should be indepeneant of NMM or WRF as it has been processed
+	    print 'Found UPP processed grib file, assuming all data has been processed'
+	if (filename.count('wrfprs')==1) & (filename[-4:] != '.grb'):
+	    self.filename=str(self.filename+'.grb')
+	    self.file_type='grb'
+	    self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
+	    print 'Found UPP processed grib file, assuming all data has been processed'
+	if (filename.count('wrfwnd')==1) & (filename[-4:] != '.grb'):
+	    self.filename=str(self.filename+'.grb')
+	    self.file_type='grb'
+	    self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
+	    print 'Found UPP processed grib file, assuming all data has been processed'
+	if (filename.count('WRFWND')==1) & (filename[-4:] != '.grb'):
+	    self.filename=str(self.filename+'.grb')
+	    self.file_type='grb'
+	    self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
+	    print 'Found UPP processed grib file, assuming all data has been processed'
+
+
+
+
+
+	if (self.filename.find('wrfout') == 0) | (self.filename.find('wrfprs') == 0) | (self.filename.find('WRFPRS') == 0):
 	    self.wrf_directory = './'
 	else:
 	    self.wrf_directory = str(self.filename[0:self.filename.find('wrfout')])
@@ -1920,12 +2028,13 @@ class wrf_file(calc_vars, wrf_plots):
 	    wrf_file=Nio.open_file(self.filename,'r')
 	    self.niofile=wrf_file
 
-	    if (self.niofile.variables.keys().count('DX_NMM') >=1):
-		print 'Found variable DX_NMM, assuming you are running the NMM core'
-		self.wrf_core='NMM'
-	    else:
-		print 'DX_NMM not found, assuming you are running the ARW core'
-		self.wrf_core='ARW'
+	    if (self.file_type=='nc'):
+		if (self.niofile.variables.keys().count('DX_NMM') >=1):
+		    print 'Found variable DX_NMM, assuming you are running the NMM core'
+		    self.wrf_core='NMM'
+		else:
+		    print 'DX_NMM not found, assuming you are running the ARW core'
+		    self.wrf_core='ARW'
 
 	except:
 	    print '\n \n \n \n SOMETHING WENT WRONG.\n This is likely because your file path is incorrect \n   please try again'
@@ -1945,13 +2054,18 @@ class wrf_file(calc_vars, wrf_plots):
 	Note that some of these variables will be derived"""
 
 	if self.niofile:
-	    print self.wrf_core
+	    #print self.wrf_core
 	    if self.wrf_core=='ARW':
 	        pert_vars=perturbation_variables.pert_variable_dict_ARW
 		calc_vars=perturbation_variables.calc_variable_dict_ARW
 	    elif self.wrf_core=='NMM': 
 	        pert_vars=perturbation_variables.pert_variable_dict_NMM
 		calc_vars=perturbation_variables.calc_variable_dict_NMM
+	    elif self.wrf_core=='NULL':
+	        pert_vars={}
+		calc_vars={}
+
+		pass
 	    else:
 		print "wrf core type not found, you should be using either ARW or NMM"
 		exit()
@@ -1961,30 +2075,39 @@ class wrf_file(calc_vars, wrf_plots):
 	    var_list=self.niofile.variables.keys()#+calc_vars.keys()+pert_vars.keys()
 	    var_list.sort()
 
+    
 	    var_it=iter(var_list)
 	    line=''
 
-	
+	    max_len_varname=14
+
 	    for variable in range(len(var_list)):
 		var_done=0
 		var=var_it.next()
+
+		if (len(var_list[variable]) > max_len_varname):
+		    max_len_varname = len(var_list[variable])+2
+
+
 	        if (variable % 4  == 3):
 		    line = '\n'
 		else:
 		    line = ''
-		
+
+	
 		for vvar in range(len(pert_vars.keys())):
 		    if (var in pert_vars.values()[vvar][0]) | (var in str(pert_vars.values()[vvar][1])):
-			#var_color='\033[3;9m'+var.ljust(14)+'\033[m'
-			var_half='\033[0;41m'+var+'\033[m'
-			var_color=var_half.ljust(24)
-			print var_color  , line,
-			var_done=1
-			break
+		        #var_color='\033[3;9m'+var.ljust(14)+'\033[m'
+		        var_half='\033[0;41m'+var+'\033[m'
+		        var_color=var_half.ljust(24)
+		        print var_color  , line,
+		        var_done=1
+		        break
 
 		if var_done == 0:
-		    var_color=var.ljust(14)
+		    var_color=var.ljust(max_len_varname)
 		    print var_color  , line,
+
 
 	    print '\n'
 	    print 'The following variables are created from perterbation and base state variables \n'
@@ -2127,6 +2250,10 @@ class wrf_file(calc_vars, wrf_plots):
 	elif self.wrf_core=='NMM': 
             pert_vars=perturbation_variables.pert_variable_dict_NMM
 	    calc_vars=perturbation_variables.calc_variable_dict_NMM
+	elif self.wrf_core == 'NULL':
+            pert_vars={}
+	    calc_vars={}
+
 	else:
 	    print "wrf core type not found, you should be using either ARW or NMM"
 	    exit()
