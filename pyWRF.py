@@ -380,7 +380,13 @@ class calc_vars():
 		if xlat and xlon is 2d.
 		"""
 
-	    del_lat=del_lon=4.0   #2 degrees! this should easily be enough for all possible cases
+
+            if (user_lat < n.min(lat_array)) | (user_lat > n.max(lat_array)) |  (user_lon < n.min(long_array)) | (user_lon > n.max(long_array)):
+                print 'point outside array bounds, skipping'
+                return n.nan,n.nan
+
+
+	    del_lat=del_lon=2.0   #2 degrees! this should easily be enough for all possible cases
 	    i=j=[0,0]
 
 	    loop=1
@@ -426,8 +432,12 @@ class calc_vars():
 #
 #		    print n.sum(lat_ij), n.sum(lon_ij),loop_count
 		    if (loop_count >= 2000):
-			print i,j
+			print 'loop greater than 2000'
 			try:
+			    #print i[0],j[0]
+			    #print lat_array[0,j[0],i[0]]
+			    #print lon_array[0,j[0],i[0]]
+                            print 'error is', user_lat - i[0], user_long - j[0]
 			    return i[0], j[0]
 			except:
 			    print 'passing'
@@ -463,7 +473,11 @@ class calc_vars():
 
 	    print 'finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')'
 	    print i,j
-
+	    if (len(n.shape(lat_array)) == 3):
+	        print 'result of the above coordinate points is     (',lat_array[0,i[0],j[0]],',' ,long_array[0,i[0],j[0]],')'
+	    elif (len(n.shape(lat_array)) == 2):
+	        print 'result of the above coordinate points is     (',lat_array[i[0],j[0]],',' ,long_array[i[0],j[0]],')'
+            print ''
 #	    print del_lat_old
 #	    print del_lon_old
 	    return i[0],j[0]
@@ -1992,7 +2006,6 @@ class wrf_file(calc_vars, wrf_plots):
 	if (filename.count('dbz_d0')==1) & (filename[-3:] != '.nc'):
 	    self.filename=str(self.filename+'.nc')
 	    self.file_type='nc'
-
 	if (filename.count('WRFPRS')==1) & (filename[-4:] != '.grb'):
 	    self.filename=str(self.filename+'.grb')
 	    self.file_type='grb'
@@ -2018,12 +2031,13 @@ class wrf_file(calc_vars, wrf_plots):
 
 
 
-	if (self.filename.find('wrfout') == 0) | (self.filename.find('wrfprs') == 0) | (self.filename.find('WRFPRS') == 0):
+	if (self.filename.find('wrfout') == 0) | (self.filename.find('wrfprs') == 0) | (self.filename.find('WRFPRS') == 0) | (self.filename.find('dbz_d') == 0):
 	    self.wrf_directory = './'
 	else:
-	    self.wrf_directory = str(self.filename[0:self.filename.find('wrfout')])
-
-
+	    if self.filename.count('wrfout') == 1:
+		self.wrf_directory = str(self.filename[0:self.filename.find('wrfout')])
+	    elif self.filename.count('dbz_d0') == 1:
+		self.wrf_directory = str(self.filename[0:self.filename.find('dbz_d0')])
 	try:
 	    wrf_file=Nio.open_file(self.filename,'r')
 	    self.niofile=wrf_file
