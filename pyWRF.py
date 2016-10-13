@@ -1,23 +1,25 @@
 #module: pyWRF
-"""	This is a python  package for those iterested in working with 
-	the Weather Research and Forecasting model output. 
+"""     This is a python  package for those iterested in working with 
+        the Weather Research and Forecasting model output. 
 
-	Users are required to add PYWRFPATH to their .profile
-	For example:
+        Users are required to add PYWRFPATH to their .profile
+        For example:
 
-	export PYWRFPATH=/path/to/pyWRF
+        export PYWRFPATH=/path/to/pyWRF
 
-	you should also add PYWRFPATH to your PYTHONPATH so you can import 
-	pyWRF from any directory you want. i.e. 
+        you should also add PYWRFPATH to your PYTHONPATH so you can import 
+        pyWRF from any directory you want. i.e. 
 
-	export PYTHONPATH=$PYTHONPATH:$PYWRFPATH
+        export PYTHONPATH=$PYTHONPATH:$PYWRFPATH
 
-	The pyWRF module comes with a library directory which contains 
-	information required for plotting,microphysics calculations etc.
-	DO NOT REMOVE THIS DIRECTORY.
+        The pyWRF module comes with a library directory which contains 
+        information required for plotting,microphysics calculations etc.
+        DO NOT REMOVE THIS DIRECTORY.
 
-	Example python scripts can be found in the example_scripts directory.
-	"""
+        Example python scripts can be found in the example_scripts directory.
+
+        13/10/2016 creating a python3 branch
+        """
 import sys
 import os
 PYWRFPATH=os.environ['PYWRFPATH']
