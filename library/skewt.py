@@ -299,8 +299,8 @@ def draw_skewt(p, h, T, Td, u, v, imagename, title = None, show = False):
     
     wbax.xaxis.set_ticks([],[])
     for tick in wbax.yaxis.get_major_ticks():
-	tick.label1On = False
-    
+        tick.label1On = False
+
     ax.set_yticks(np.linspace(100,1000,10))
     ax.yaxis.set_major_formatter(ScalarFormatter())
     ax.set_xticks(xticklocs)

@@ -29,9 +29,10 @@ if use_NIO:
     import Nio
 else:
     import netCDF4
+    import pygrib
 import wrf_user_unstagger
 import perturbation_variables
-import numpy as n
+import numpy as np
 import pylab as pl
 import scipy as s
 #from mpl_toolkits.basemap import Basemap, shiftgrid
@@ -148,13 +149,13 @@ class calc_vars():
         ep_2=r_d/r_v
         ep_3=0.622
 
-        es=10.*svp1*n.exp(svp2*(temperature-svpt0)/(temperature-svp3))
+        es=10.*svp1*np.exp(svp2*(temperature-svpt0)/(temperature-svp3))
         qvs=ep_3*es/(0.01 * pressure- (1-ep_3)*es)
 
         qvap_on_qvs=qvapor/qvs
 
-        inner_part=n.where(qvap_on_qvs >= 1.0, 1.0,qvap_on_qvs)
-        rh=100*n.where(inner_part <=0,0,inner_part)
+        inner_part=np.where(qvap_on_qvs >= 1.0, 1.0,qvap_on_qvs)
+        rh=100*np.where(inner_part <=0,0,inner_part)
         return rh
 
     def compute_vtmk(self,qvapor=None,tmk=None):
@@ -245,10 +246,10 @@ class calc_vars():
 
         print('calculating dew point temperature in kelvin\n')
         pressure=pressure/100.                                #I think pressure needs to be in mb
-        qv= n.where(qvapor <0.,0.,qvapor)
+        qv= np.where(qvapor <0.,0.,qvapor)
         vapor_pres  = (qv*pressure)/(0.622+qv)        
-        vapor_pres  = n.where(vapor_pres < 0.001, 0.001,vapor_pres)        #avoid problems near zero
-        td= (243.5*n.log(vapor_pres)-440.8)/(19.48-n.log(vapor_pres))
+        vapor_pres  = np.where(vapor_pres < 0.001, 0.001,vapor_pres)        #avoid problems near zero
+        td= (243.5*np.log(vapor_pres)-440.8)/(19.48-np.log(vapor_pres))
 
         return td
 
@@ -298,8 +299,8 @@ class calc_vars():
         grav=9.81
 
         exponent=(grav*Z[0,0,:,:])/(rgas*T[0,0,:,:])
-        #mslp = psfc[0,:,:]*n.exp(exponent)
-        mslp = pres[0,0,:,:]*n.exp(exponent)
+        #mslp = psfc[0,:,:]*np.exp(exponent)
+        mslp = pres[0,0,:,:]*np.exp(exponent)
 
 
         return mslp
@@ -378,9 +379,9 @@ class calc_vars():
             """
 
 
-        if (user_lat < n.min(lat_array)) | (user_lat > n.max(lat_array)) |  (user_lon < n.min(long_array)) | (user_lon > n.max(long_array)):
+        if (user_lat < np.min(lat_array)) | (user_lat > np.max(lat_array)) |  (user_lon < np.min(long_array)) | (user_lon > np.max(long_array)):
             print('point outside array bounds, skipping')
-            return n.nan,n.nan
+            return np.nan,np.nan
 
 
         del_lat=del_lon=2.0   #2 degrees! this should easily be enough for all possible cases
@@ -397,17 +398,17 @@ class calc_vars():
                 upper_lon=user_lon+del_lon
                 lower_lon=user_lon-del_lon
 
-                if (len(n.shape(lat_array)) == 3):
-                    lat_ij=n.where((lat_array[0,:,:] < upper_lat) & (lat_array[0,:,:] >= lower_lat),1,0)
-                    lon_ij=n.where((long_array[0,:,:] > lower_lon) & (long_array[0,:,:] <= upper_lon),1,0)
+                if (len(np.shape(lat_array)) == 3):
+                    lat_ij=np.where((lat_array[0,:,:] < upper_lat) & (lat_array[0,:,:] >= lower_lat),1,0)
+                    lon_ij=np.where((long_array[0,:,:] > lower_lon) & (long_array[0,:,:] <= upper_lon),1,0)
 
-                elif (len(n.shape(lat_array)) == 2):
-                    lat_ij=n.where((lat_array[:,:] < upper_lat) & (lat_array[:,:] >= lower_lat),1,0)
-                    lon_ij=n.where((long_array[:,:] > lower_lon) & (long_array[:,:] <= upper_lon),1,0)
+                elif (len(np.shape(lat_array)) == 2):
+                    lat_ij=np.where((lat_array[:,:] < upper_lat) & (lat_array[:,:] >= lower_lat),1,0)
+                    lon_ij=np.where((long_array[:,:] > lower_lon) & (long_array[:,:] <= upper_lon),1,0)
                 else:
                     pass
 
-                i,j = n.where((lat_ij == 1) & (lon_ij==1))
+                i,j = np.where((lat_ij == 1) & (lon_ij==1))
 
                 del_lat_old=del_lat
                 del_lon_old=del_lon
@@ -430,24 +431,24 @@ class calc_vars():
                 #if loop_count == 70:
                 #    raw_input('pause')
 
-            if (n.shape(i)[0] == 0):
+            if (np.shape(i)[0] == 0):
                 del_lat=del_lat_old*div_factor_lat
                 del_lat=del_lat*(99/100.)
                 i=[0,0]
-            if (n.shape(j)[0] == 0): 
+            if (np.shape(j)[0] == 0): 
                 del_lon=del_lon_old*div_factor_lon
                 del_lon=del_lon*(99/100.)
                 j=[0,0]
 
             #print(loop_count)
-            if (n.shape(i)[0] == 1) & (n.shape(j)[0] == 1): 
+            if (np.shape(i)[0] == 1) & (np.shape(j)[0] == 1): 
                 loop=0.
 
         print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
         print(i,j)
-        if (len(n.shape(lat_array)) == 3):
+        if (len(np.shape(lat_array)) == 3):
             print('result of the above coordinate points is     (',lat_array[0,i[0],j[0]],',' ,long_array[0,i[0],j[0]],')')
-        elif (len(n.shape(lat_array)) == 2):
+        elif (len(np.shape(lat_array)) == 2):
             print('result of the above coordinate points is     (',lat_array[i[0],j[0]],',' ,long_array[i[0],j[0]],')')
         print('')
         return i[0],j[0]
@@ -472,12 +473,12 @@ class calc_vars():
 
         """
 
-        if (len(n.shape(input_variable)) == 4):
-            ti_dim=n.shape(input_variable)[0]
-            hi_dim=n.shape(input_variable)[1]
-            sn_dim=n.shape(input_variable)[2]
-            we_dim=n.shape(input_variable)[3]
-            output_variable=n.zeros((ti_dim,len(height_levels),sn_dim,we_dim),dtype=n.float32)
+        if (len(np.shape(input_variable)) == 4):
+            ti_dim=np.shape(input_variable)[0]
+            hi_dim=np.shape(input_variable)[1]
+            sn_dim=np.shape(input_variable)[2]
+            we_dim=np.shape(input_variable)[3]
+            output_variable=np.zeros((ti_dim,len(height_levels),sn_dim,we_dim),dtype=np.float32)
 
             for the_time in range(ti_dim):
                 for i in range(sn_dim):
@@ -485,9 +486,9 @@ class calc_vars():
                         output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j])
 
 
-        if (len(n.shape(input_variable)) == 1):
-            hi_dim=n.shape(input_variable)[0]
-            output_variable=n.zeros((len(height_levels)),dtype=n.float32)
+        if (len(np.shape(input_variable)) == 1):
+            hi_dim=np.shape(input_variable)[0]
+            output_variable=np.zeros((len(height_levels)),dtype=np.float32)
             output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:])
         return output_variable
 
@@ -513,14 +514,14 @@ class calc_vars():
 
         """
 
-        if (len(n.shape(input_variable)) == 4):
-            ti_dim=n.shape(input_variable)[0]
-            hi_dim=n.shape(input_variable)[1]
-            sn_dim=n.shape(input_variable)[2]
-            we_dim=n.shape(input_variable)[3]
-            output_variable=n.zeros((ti_dim,len(pres_levels),sn_dim,we_dim),dtype=n.float32)
-            input_variable_rev=n.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=n.float32)
-            pres_on_model_levels_rev=n.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=n.float32)
+        if (len(np.shape(input_variable)) == 4):
+            ti_dim=np.shape(input_variable)[0]
+            hi_dim=np.shape(input_variable)[1]
+            sn_dim=np.shape(input_variable)[2]
+            we_dim=np.shape(input_variable)[3]
+            output_variable=np.zeros((ti_dim,len(pres_levels),sn_dim,we_dim),dtype=np.float32)
+            input_variable_rev=np.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=np.float32)
+            pres_on_model_levels_rev=np.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=np.float32)
 
 
             for ti in range(ti_dim):
@@ -533,9 +534,9 @@ class calc_vars():
                     for j in range(we_dim):
                         output_variable[the_time,:,i,j] = s.interp(pres_levels[:],pres_on_model_levels_rev[the_time,:,i,j],input_variable_rev[the_time,:,i,j])
 
-        if (len(n.shape(input_variable)) == 1):
-            hi_dim=n.shape(input_variable)[0]
-            output_variable=n.zeros((len(pres_levels)),dtype=n.float32)
+        if (len(np.shape(input_variable)) == 1):
+            hi_dim=np.shape(input_variable)[0]
+            output_variable=np.zeros((len(pres_levels)),dtype=np.float32)
             output_variable[:] = s.interp(pres_levels[:],pres_on_model_levels[:],input_variable[:])
 
         return output_variable
@@ -597,42 +598,42 @@ class calc_vars():
         in0s=0
         in0g=0
         iliqskin=0
-        if (len(n.shape(qvp)) == 4):
-            ntimes=n.shape(qvp)[0]
-            mkzh=n.shape(qvp)[1]
-            mjx=n.shape(qvp)[2]  #NORTH-SOUTH
-            miy=n.shape(qvp)[3]  #WEST-EAST
+        if (len(np.shape(qvp)) == 4):
+            ntimes=np.shape(qvp)[0]
+            mkzh=np.shape(qvp)[1]
+            mjx=np.shape(qvp)[2]  #NORTH-SOUTH
+            miy=np.shape(qvp)[3]  #WEST-EAST
 
         #need to reorient z x y to x y z
 
-        qvp_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qra_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qsn_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qgr_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        tk_r =n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        prs_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qvp_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        dbz=n.zeros((ntimes,miy,mjx,mkzh),dtype=n.float32)
+        qvp_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qra_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qsn_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qgr_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        tk_r =np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        prs_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qvp_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        dbz=np.zeros((ntimes,miy,mjx,mkzh),dtype=np.float32)
 
         for ti in range(ntimes):
             for k in range(mkzh):
-                qvp_r[:,:,k]=n.transpose(qvp[ti,k,:,:])
-                qra_r[:,:,k]=n.transpose(qra[ti,k,:,:])
-                qsn_r[:,:,k]=n.transpose(qsn[ti,k,:,:])
-                qgr_r[:,:,k]=n.transpose(qgr[ti,k,:,:])
-                tk_r[:,:,k]= n.transpose(tk[ti,k,:,:])
-                prs_r[:,:,k]=n.transpose(prs[ti,k,:,:])
-                #qvp_r[:,:,k]=n.transpose(qvp[ti,k,:,:])
+                qvp_r[:,:,k]=np.transpose(qvp[ti,k,:,:])
+                qra_r[:,:,k]=np.transpose(qra[ti,k,:,:])
+                qsn_r[:,:,k]=np.transpose(qsn[ti,k,:,:])
+                qgr_r[:,:,k]=np.transpose(qgr[ti,k,:,:])
+                tk_r[:,:,k]= np.transpose(tk[ti,k,:,:])
+                prs_r[:,:,k]=np.transpose(prs[ti,k,:,:])
+                #qvp_r[:,:,k]=np.transpose(qvp[ti,k,:,:])
 
             dbz[ti,:,:,:]=dbzcalc_lin_py.dbzcalc(qvp_r[:,:,:],qra_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],prs_r[:,:,:],dbz[ti,:,:,:],in0r,in0s,in0g,iliqskin,miy=miy,mjx=mjx,mkzh=mkzh)
 
         #transpose back
 
-        dbz_lin=n.zeros((ntimes,mkzh,mjx,miy),dtype=n.float32)
+        dbz_lin=np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)
 
         for ti in range(ntimes):
             for k in range(mkzh):
-                dbz_lin[ti,k,:,:]=n.transpose(dbz[ti,:,:,k])
+                dbz_lin[ti,k,:,:]=np.transpose(dbz[ti,:,:,k])
  
         self.variable_dict.update({'dbz_lin':dbz_lin})
 
@@ -700,63 +701,63 @@ class calc_vars():
         in0s=0
         in0g=0
         iliqskin=0
-        if (len(n.shape(qvp)) == 4):
-            ntimes=n.shape(qvp)[0]
-            mkzh=n.shape(qvp)[1]
-            mjx=n.shape(qvp)[2]  #NORTH-SOUTH
-            miy=n.shape(qvp)[3]  #WEST-EAST
+        if (len(np.shape(qvp)) == 4):
+            ntimes=np.shape(qvp)[0]
+            mkzh=np.shape(qvp)[1]
+            mjx=np.shape(qvp)[2]  #NORTH-SOUTH
+            miy=np.shape(qvp)[3]  #WEST-EAST
         #need to reorient z x y to x y z
 
-        qvp_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qnr_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qra_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qsn_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        qgr_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        tk_r =n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        prs_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        rho_r=n.zeros((miy,mjx,mkzh),dtype=n.float32)
-        dbz=n.zeros((ntimes,miy,mjx,mkzh),dtype=n.float32)
+        qvp_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qnr_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qra_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qsn_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        qgr_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        tk_r =np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        prs_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        rho_r=np.zeros((miy,mjx,mkzh),dtype=np.float32)
+        dbz=np.zeros((ntimes,miy,mjx,mkzh),dtype=np.float32)
 
-        rho=n.zeros((ntimes,miy,mjx,mkzh),dtype=n.float32)
+        rho=np.zeros((ntimes,miy,mjx,mkzh),dtype=np.float32)
 
         rho=compute_rho(rho,tk,prs,qvp,miy,mjx,mkzh)
         #rho=compute_rho_dry(rho,tk,prs)
 
         for ti in range(ntimes):
             for k in range(mkzh):
-                rho_r[:,:,k]=n.transpose(rho[ti,k,:,:])
-                qra_r[:,:,k]=n.transpose(qra[ti,k,:,:])
-                qsn_r[:,:,k]=n.transpose(qsn[ti,k,:,:])
-                qgr_r[:,:,k]=n.transpose(qgr[ti,k,:,:])
-                tk_r[:,:,k]= n.transpose(tk[ti,k,:,:])
-                prs_r[:,:,k]=n.transpose(prs[ti,k,:,:])
-                #qvp_r[:,:,k]=n.transpose(qvp[ti,k,:,:])
+                rho_r[:,:,k]=np.transpose(rho[ti,k,:,:])
+                qra_r[:,:,k]=np.transpose(qra[ti,k,:,:])
+                qsn_r[:,:,k]=np.transpose(qsn[ti,k,:,:])
+                qgr_r[:,:,k]=np.transpose(qgr[ti,k,:,:])
+                tk_r[:,:,k]= np.transpose(tk[ti,k,:,:])
+                prs_r[:,:,k]=np.transpose(prs[ti,k,:,:])
+                #qvp_r[:,:,k]=np.transpose(qvp[ti,k,:,:])
 
             print(miy,mjx,mkzh)
-            print(n.shape(qra_r))
-            print(n.shape(qnr_r))
-            print(n.shape(qsn_r))
-            print(n.shape(qgr_r))
-            print(n.shape(tk_r))
-            print(n.shape(rho_r))
-            print(n.shape(dbz[ti,:,:,:]))
+            print(np.shape(qra_r))
+            print(np.shape(qnr_r))
+            print(np.shape(qsn_r))
+            print(np.shape(qgr_r))
+            print(np.shape(tk_r))
+            print(np.shape(rho_r))
+            print(np.shape(dbz[ti,:,:,:]))
 
             #dbz[ti,:,:,:]=dbzcalc_lin_py      .dbzcalc(qvp_r[:,:,:],qra_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],prs_r[:,:,:],dbz[ti,:,:,:],in0r,in0s,in0g,iliqskin,miy=miy,mjx=mjx,mkzh=mkzh)
             #dbz[ti,:,:,:]=dbzcalc_thompson_py_ext.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
             #poo=dbzcalc_thompson_py_ext.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
             poo=dbzcalc_thompson_py.dbzcalc2(qra_r[:,:,:],qnr_r[:,:,:],qsn_r[:,:,:],qgr_r[:,:,:],tk_r[:,:,:],rho_r[:,:,:],dbz[ti,:,:,:],miy=miy,mjx=mjx,mkzh=mkzh)   #dbz will be top-down
-            print(n.shape(poo))
+            print(np.shape(poo))
         #transpose back
 
         #adbz_test=poo[6]
         dbz_test=poo#[6]
-        print(n.shape(dbz_test))
+        print(np.shape(dbz_test))
 
-        dbz_thomp=n.zeros((ntimes,mkzh,mjx,miy),dtype=n.float32)
+        dbz_thomp=np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)
 
         for ti in range(ntimes):
             for k in range(mkzh):
-                dbz_thomp[ti,k,:,:]=n.transpose(dbz_test[:,:,k])
+                dbz_thomp[ti,k,:,:]=np.transpose(dbz_test[:,:,k])
 
         self.variable_dict.update({'dbz_thomp':dbz_thomp})
 
@@ -853,27 +854,27 @@ class calc_vars():
         fid_massr=open(PYWRFPATH+'/library/eta_tables_massr.txt','r')
         fid_massi=open(PYWRFPATH+'/library/eta_tables_massi.txt','r')
 
-        MASSR=n.array(fid_massr.readline().split(','),dtype=n.float32)
-        MASSI=n.array(fid_massi.readline().split(','),dtype=n.float32)
+        MASSR=np.array(fid_massr.readline().split(','),dtype=np.float32)
+        MASSI=np.array(fid_massi.readline().split(','),dtype=np.float32)
 
         # Set up grid (vertical levels = mkzh, NSdim = y = miy, WEdim = x = mjx, ) 
-        if (len(n.shape(FS1D)) == 4):
-            ntimes=n.shape(FS1D)[0]
-            mkzh=n.shape(FS1D)[1]
-            mjx=n.shape(FS1D)[2]   # NS-DIMENSION
-            miy=n.shape(FS1D)[3]   # WE-DIMENSION
+        if (len(np.shape(FS1D)) == 4):
+            ntimes=np.shape(FS1D)[0]
+            mkzh=np.shape(FS1D)[1]
+            mjx=np.shape(FS1D)[2]   # NS-DIMENSION
+            miy=np.shape(FS1D)[3]   # WE-DIMENSION
 
 
-        QS1                =n.zeros((mjx,miy),dtype=n.float32)         # "Snow" (precipitation ice) mixing ratio (kg/kg)
-        Tdbz        =n.zeros((ntimes,mkzh,mjx,miy),dtype=n.float32)         # output array (currently DBZ1)        
-        Rdbz        =n.zeros((ntimes,mkzh,mjx,miy),dtype=n.float32)         # output array (currently DBZR)
-        Idbz        =n.zeros((ntimes,mkzh,mjx,miy),dtype=n.float32)         # output array (currently DBZI)
-        DBZ1        =n.zeros((mjx,miy),dtype=n.float32)         # Equivalent radar reflectivity factor in dBZ; ie., 10*Log10(Z)
-        DBZR1        =n.zeros((mjx,miy),dtype=n.float32)         # Equivalent radar reflectivity factor from rain in dBZ
-        DBZI1        =n.zeros((mjx,miy),dtype=n.float32)         # Equivalent radar reflectivity factor from ice (all forms) in dBZ
-        DBZC1        =n.zeros((mjx,miy),dtype=n.float32)         # Equivalent radar reflectivity factor from parameterized convection in dBZ
-        NLICE1        =n.zeros((mjx,miy),dtype=n.float32)        # Time-averaged number concentration of large ice
-        CUREFL        =n.zeros((mjx,miy),dtype=n.float32)        # Radar reflectivity contribution from convection (mm**6/m**3)
+        QS1                =np.zeros((mjx,miy),dtype=np.float32)         # "Snow" (precipitation ice) mixing ratio (kg/kg)
+        Tdbz        =np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)         # output array (currently DBZ1)        
+        Rdbz        =np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)         # output array (currently DBZR)
+        Idbz        =np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)         # output array (currently DBZI)
+        DBZ1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor in dBZ; ie., 10*Log10(Z)
+        DBZR1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor from rain in dBZ
+        DBZI1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor from ice (all forms) in dBZ
+        DBZC1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor from parameterized convection in dBZ
+        NLICE1        =np.zeros((mjx,miy),dtype=np.float32)        # Time-averaged number concentration of large ice
+        CUREFL        =np.zeros((mjx,miy),dtype=np.float32)        # Radar reflectivity contribution from convection (mm**6/m**3)
 
         im = mjx
         jm = miy
@@ -934,23 +935,23 @@ class calc_vars():
         # Z_2 = Z_1 + (R_T_v/g)*[log(p_1) - log(p_2)] 
 
         #fix up geopotential height at broken points
-        ter=n.where(ter < 0,0,ter)
+        ter=np.where(ter < 0,0,ter)
 
 
         # Set up grid (vertical levels = mkzh, NSdim = y = miy, WEdim = x = mjx, ) 
-        if (len(n.shape(prs)) == 4):
-            ntimes=n.shape(prs)[0]
-            mkzh=n.shape(prs)[1]-1
-            mjx=n.shape(prs)[2]   # NS-DIMENSION
-            miy=n.shape(prs)[3]   # WE-DIMENSION
+        if (len(np.shape(prs)) == 4):
+            ntimes=np.shape(prs)[0]
+            mkzh=np.shape(prs)[1]-1
+            mjx=np.shape(prs)[2]   # NS-DIMENSION
+            miy=np.shape(prs)[3]   # WE-DIMENSION
 
-        log_p=n.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
-        base_level=n.zeros((ntimes,mjx,miy), dtype="float")
-        ght=n.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
+        log_p=np.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
+        base_level=np.zeros((ntimes,mjx,miy), dtype="float")
+        ght=np.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
 
         for ti in range(ntimes):
             for k in range(mkzh+1):
-               log_p[ti,k,:,:]=n.log(prs[ti,k,:,:])
+               log_p[ti,k,:,:]=np.log(prs[ti,k,:,:])
 
         rgas=287.04
         grav=9.81
@@ -963,7 +964,7 @@ class calc_vars():
 
         #now we have ght on staggared levels, we must destagger
 
-        ght_destag=n.zeros((ntimes,mkzh,mjx,miy), dtype="float")
+        ght_destag=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
 
         for ti in range(ntimes):
             for k in range(mkzh):
@@ -979,7 +980,7 @@ class calc_vars():
         in the local array. """
         mn=minimum_filter(mat,size=window,mode=mode)
         mx=maximum_filter(mat,size=window,mode=mode)
-        return n.nonzero(mat == mn), n.nonzero(mat==mx)
+        return np.nonzero(mat == mn), np.nonzero(mat==mx)
 
     def write_netcdf_file(self,input_variable,var_name,directory='.',filename='new_output', var_dim=('T','BT','SN','WE'), var_type='f'):
         """This is a function to write out a selected field to a netcdf file
@@ -1045,11 +1046,11 @@ class calc_vars():
         dimension_numbers=[]
         for dim_n in range(len(var_dim)):
 
-            if( len(var_dim) != len(n.shape(input_variable) )):
+            if( len(var_dim) != len(np.shape(input_variable) )):
                 print('Error, your array and your dimension shape differ')
                 return
 
-            dimension_dict.update({var_dim[dim_n]:n.shape(input_variable)[dim_n]} )
+            dimension_dict.update({var_dim[dim_n]:np.shape(input_variable)[dim_n]} )
             dimension_names.append(master_dim_name[master_var_dim.index(var_dim[dim_n])])
             dimension_numbers.append(dimension_dict[var_dim[dim_n]])
 
@@ -1281,19 +1282,19 @@ class wrf_plots():
             lon_var='GLON'
 
         try:
-            lat_min=n.min(self.variable_dict[lat_var])
+            lat_min=np.min(self.variable_dict[lat_var])
         except:
             self.get_var(lat_var)
-            lat_min=n.min(self.variable_dict[lat_var])
+            lat_min=np.min(self.variable_dict[lat_var])
 
         try:
-            lon_min=n.min(self.variable_dict[lon_var])
+            lon_min=np.min(self.variable_dict[lon_var])
         except:
             self.get_var(lon_var)
-            lon_min=n.min(self.variable_dict[lon_var])
+            lon_min=np.min(self.variable_dict[lon_var])
 
-        lat_max=n.max(self.variable_dict[lat_var])
-        lon_max=n.max(self.variable_dict[lon_var])
+        lat_max=np.max(self.variable_dict[lat_var])
+        lon_max=np.max(self.variable_dict[lon_var])
 
         lat_range= lat_max-lat_min
         lon_range= lon_max-lon_min
@@ -1308,23 +1309,23 @@ class wrf_plots():
         del_lon=lon_range/nlines
 
 
-        spacing_array=n.array([0.5,1.0,5.0,10.0,20.0],dtype='float')
+        spacing_array=np.array([0.5,1.0,5.0,10.0,20.0],dtype='float')
 
-        lat_diff= n.sqrt((spacing_array-del_lat)**2)
-        lon_diff= n.sqrt((spacing_array-del_lon)**2)
+        lat_diff= np.sqrt((spacing_array-del_lat)**2)
+        lon_diff= np.sqrt((spacing_array-del_lon)**2)
 
-        lat_pos = n.where(lat_diff == n.min(lat_diff))
-        lon_pos = n.where(lon_diff == n.min(lon_diff))
+        lat_pos = np.where(lat_diff == np.min(lat_diff))
+        lon_pos = np.where(lon_diff == np.min(lon_diff))
 
         delat=spacing_array[lat_pos]
         delon=spacing_array[lon_pos]
 
         if coast:
             m.drawcoastlines()
-        circles = n.arange(0.,90.+delat,delat).tolist()+\
-            n.arange(-delat,-90.-delat,-delat).tolist()
+        circles = np.arange(0.,90.+delat,delat).tolist()+\
+            np.arange(-delat,-90.-delat,-delat).tolist()
         m.drawparallels(circles,labels=[1,0,0,0],fontsize=10.)
-        meridians = n.arange(10.,360.,delon)
+        meridians = np.arange(10.,360.,delon)
         m.drawmeridians(meridians,labels=[0,0,0,1],fontsize=10.)
 
 
@@ -1419,7 +1420,7 @@ class wrf_plots():
             y=self.map_y
 
         custom_map=pl.get_cmap('jet',lut=10)
-        contour_levs=n.arange(0.012,0.025, 0.001)
+        contour_levs=np.arange(0.012,0.025, 0.001)
         vapor_plot=m.contourf(x,y,qvapor[:,:],contour_levs,cmap=custom_map, title=title)#,cmap=custom_map)
         vapor_plot.set_clim((0.012,0.025))
 
@@ -1461,11 +1462,11 @@ class wrf_plots():
                 wrf_file.plot_winds(U[0,10,:,:],V[0,10,:,:])"""
 
 
-        sn_points=n.shape(U)[0]
-        we_points=n.shape(V)[1]
+        sn_points=np.shape(U)[0]
+        we_points=np.shape(V)[1]
 
-        u_stripped=n.zeros((sn_points,we_points),dtype=n.float32)
-        v_stripped=n.zeros((sn_points,we_points),dtype=n.float32)
+        u_stripped=np.zeros((sn_points,we_points),dtype=np.float32)
+        v_stripped=np.zeros((sn_points,we_points),dtype=np.float32)
         u_stripped[:,:]='nan'
         v_stripped[:,:]='nan'
 
@@ -1541,12 +1542,12 @@ class wrf_plots():
         else:
             dbz_data=dbz_array
 
-        if (len(n.shape(dbz_data)) == 4):
+        if (len(np.shape(dbz_data)) == 4):
             #assuming (time,height,..,...)
-            ntimes                =n.shape(dbz_data)[0]
-            nlevels                =n.shape(dbz_data)[1]
-            xgridpoints                =n.shape(dbz_data)[2]
-            ygridpoints                =n.shape(dbz_data)[3]
+            ntimes                =np.shape(dbz_data)[0]
+            nlevels                =np.shape(dbz_data)[1]
+            xgridpoints                =np.shape(dbz_data)[2]
+            ygridpoints                =np.shape(dbz_data)[3]
 
         if (dx==0.) | (dy==0.):
             print('you did not specify a grid spacing so assuming it is the same as your wrf data')
@@ -1557,13 +1558,13 @@ class wrf_plots():
                 delx=self.dataset.DX[0]
                 dely=self.dataset.DY[0]
 
-        dbz_plane=pl.zeros((xgridpoints,ygridpoints),dtype=n.float32)
+        dbz_plane=pl.zeros((xgridpoints,ygridpoints),dtype=np.float32)
 
         xmina= radar_range[0]
         ymina= radar_range[2]
 
-        xar=pl.zeros(xgridpoints,dtype=n.float32)
-        yar=pl.zeros(ygridpoints,dtype=n.float32)
+        xar=pl.zeros(xgridpoints,dtype=np.float32)
+        yar=pl.zeros(ygridpoints,dtype=np.float32)
         for ii in range(xgridpoints):
             xar[ii]=xmina+(ii)*delx
         for jj in range(ygridpoints):
@@ -1576,12 +1577,12 @@ class wrf_plots():
 
         for ti in range(ntimes):
             dbz_plane[:,:]=dbz_data[ti,level,:,:]
-            dbz_mask=n.ma.masked_less(dbz_plane, min_dbz)
+            dbz_mask=np.ma.masked_less(dbz_plane, min_dbz)
 
             print('dbz_plane')
-            print(n.shape(dbz_plane))
+            print(np.shape(dbz_plane))
             print('dbz_mask')
-            print(n.shape(dbz_mask))
+            print(np.shape(dbz_mask))
 
             pl.figure()
             pl.clf()
@@ -1612,7 +1613,7 @@ class wrf_plots():
             if (imagename == None):
                 outimagename=times[ti]+'_dbz.png'
             else:
-                outimagename=n.str(times[ti])+'_'+imagename+'_dbz.png'
+                outimagename=np.str(times[ti])+'_'+imagename+'_dbz.png'
 
             pl.savefig(self.plot_directory+'/'+outimagename)
             del(cappi)
@@ -1690,8 +1691,8 @@ class wrf_plots():
 
             PCP_LEVELS = [0.01,0.03,0.05,0.10,0.15,0.20,0.25,0.30,0.40,0.50,0.60,0.70,0.80,0.90,1.00,1.25,1.50,1.75,2.00,2.50]
 
-            max_precip = n.max(rain_total)
-            scaling_factor = n.ceil(max_precip/PCP_LEVELS[-1])
+            max_precip = np.max(rain_total)
+            scaling_factor = np.ceil(max_precip/PCP_LEVELS[-1])
 
             if scaling_factor > 0.0:
                 for cont in range(len(PCP_LEVELS)):
@@ -1753,7 +1754,7 @@ class wrf_plots():
         #    if (os.path.isdir(out_dir) == False):
         #        os.system("mkdir -p "+out_dir)
         #    the_time= wrf_out[11:]
-        clevs=n.arange(900,1100,5)
+        clevs=np.arange(900,1100,5)
         cs=  m.contour(x,y,mslp[:,:],clevs,colors='k', linewidths=1.0)
         pl.clabel(cs,inline=1,fontsize=8,fmt='%4.0f')
         self.map_lines(map_proj=m,coast=False)
@@ -1818,7 +1819,7 @@ class wrf_plots():
 
         for xx,yy,pp in zip(xlows,ylows,lowvals):
             if xx < m.xmax and xx > m.xmin and yy < m.ymax and yy > m.ymin:
-                dist=[n.sqrt((xx-x0)**2+(yy-y0)**2) for x0,y0, in xyplotted]
+                dist=[np.sqrt((xx-x0)**2+(yy-y0)**2) for x0,y0, in xyplotted]
                 if not dist or min(dist) > dmin:
                     pl.text(xx,yy,'L',fontsize=14,fontweight='bold',ha='center',va='center',color='b')
                     pl.text(xx,yy-yoffset,repr(int(pp)), fontsize=9,ha='center',va='top',color='b',bbox= dict(boxstyle='square',ec='None',fc=(1,1,1,0.5)))
@@ -1828,7 +1829,7 @@ class wrf_plots():
     #    xyplotted=[]
         for xx,yy,pp in zip(xhighs,yhighs,highvals):
             if xx<m.xmax-dmin and xx>m.xmin+dmin and yy < m.ymax-dmin and yy >m.ymin+dmin:
-                dist=[n.sqrt((xx-x0)**2+(yy-y0)**2) for x0,y0 in xyplotted]
+                dist=[np.sqrt((xx-x0)**2+(yy-y0)**2) for x0,y0 in xyplotted]
                 if not dist or min(dist) > dmin:
                     pl.text(xx,yy,'H',fontsize=14,fontweight='bold',ha='center',va='center',color='r')
                     pl.text(xx,yy-yoffset,repr(int(pp)), fontsize=9,ha='center',va='top',color='r',bbox= dict(boxstyle='square',ec='None',fc=(1,1,1,0.5)))
@@ -1841,6 +1842,8 @@ class wrf_plots():
 
 
 
+
+
 class wrf_file(calc_vars, wrf_plots):
     """Is used to read in wrf files and extract variables 
     Variables should automatically have perturbations and base-states combined, returning the full fields 
@@ -1850,6 +1853,66 @@ class wrf_file(calc_vars, wrf_plots):
     Adding grib support. I currently assume that if you are using grb files, they have been generated with UPP
     and therefore already destagged and you have calculated variables that you want.
     """
+    class pygrib_wrap():
+        """trying to make the pygrib object more like the netcdf object so i can use all the same routines
+        also want the variable names to be the same as the old PyNIO ones
+        """
+        def __init__(self,filename=None):
+            self.filename=filename
+            self.pygrib=pygrib.open(self.filename)
+            self.NCEP_table=self.load_param_table(PYWRFPATH+'/library/NCEP_Parameter_Table_2.txt')
+            var_dict={}
+            for k in self.pygrib:
+                grib_code=k['indicatorOfParameter'] #i think
+                full_name=k['name']
+                key_name=self.NCEP_table[grib_code]['abbrev']
+                if(k['indicatorOfTypeOfLevel'] == 'pl'):
+                    level_type='ISBL'
+                elif (k['indicatorOfTypeOfLevel'] == 'sfc'):
+                    level_type='SFC'
+                elif (k['indicatorOfTypeOfLevel'] == '103'):
+                    level_type='GPML'                   #actually fixed high level (hight above mean sea level in meters)
+                elif (k['indicatorOfTypeOfLevel'] == '116'):
+                    level_type='SPDY'                   #THIS IS WHAT Nio did
+                else:
+                    level_type=k['indicatorOfTypeOfLevel']
+                key_name+='_'+level_type
+                if not key_name in var_dict:
+                    var_dict[key_name]={}
+                level_name=k['level']
+                if level_name not in var_dict[key_name]:
+                    var_dict[key_name][level_name]=k#['values']
+
+            variables={}
+            for key_name in var_dict:
+                n_levels=len(var_dict[key_name].keys())
+                level_count=0
+                levels=np.zeros((n_levels))
+                level_list=[]
+                for k in var_dict[key_name]:
+                    level_list.append(k)
+                level_list.sort()
+                for level in level_list:
+                    levels[level_count]=level
+                    array_dims=np.shape(var_dict[key_name][level]['values'])
+                    assert len(array_dims) == 2
+                    if not level_count:
+                        full_array=np.zeros((n_levels,array_dims[0],array_dims[1]))
+                    full_array[level_count,:,:]=var_dict[key_name][level]['values']
+                    level_count+=1
+                variables[key_name]={'data':full_array,'levels':levels,'ndims':n_levels,'shape':np.shape(full_array)}
+
+            self.variables=variables
+
+
+        def load_param_table(self,tablename):
+            with open(tablename,'r') as fid:
+                param_dict={}
+                for line in fid:
+                    code,abbrev,name, unit = line.split(',')
+                    param_dict[int(code)]={'abbrev':abbrev.strip(),'name':name.strip(),'unit':unit.strip()}
+            return param_dict
+
     def __init__(self,filename=None):
         self.filename=filename
         self.variable_dict={}
@@ -1866,22 +1929,26 @@ class wrf_file(calc_vars, wrf_plots):
                 self.filename=str(self.filename+'.nc')
             self.file_type='nc'
         if (filename.count('WRFPRS')==1) & (filename[-4:] != '.grb'):
-            self.filename=str(self.filename+'.grb')
+            if use_NIO:
+                self.filename=str(self.filename+'.grb')
             self.file_type='grb'
             self.wrf_core="NULL"#should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('wrfprs')==1) & (filename[-4:] != '.grb'):
-            self.filename=str(self.filename+'.grb')
+            if use_NIO:
+                self.filename=str(self.filename+'.grb')
             self.file_type='grb'
             self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('wrfwnd')==1) & (filename[-4:] != '.grb'):
-            self.filename=str(self.filename+'.grb')
+            if use_NIO:
+                self.filename=str(self.filename+'.grb')
             self.file_type='grb'
             self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('WRFWND')==1) & (filename[-4:] != '.grb'):
-            self.filename=str(self.filename+'.grb')
+            if use_NIO:
+                self.filename=str(self.filename+'.grb')
             self.file_type='grb'
             self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
@@ -1899,7 +1966,14 @@ class wrf_file(calc_vars, wrf_plots):
             if use_NIO:
                 wrf_file=Nio.open_file(self.filename,'r')
             else:
-                wrf_file=netCDF4.Dataset(self.filename,'r')
+                if (self.file_type == 'nc'):
+                    wrf_file=netCDF4.Dataset(self.filename,'r')
+                elif (self.file_type == 'grb'):
+                    #wrf_file=pygrib.open(self.filename)
+                    wrf_file=self.pygrib_wrap(self.filename)
+                else:
+                    print('file type not known')
+                    exit()
 
             self.dataset=wrf_file
             if (self.file_type=='nc'):
@@ -1909,7 +1983,7 @@ class wrf_file(calc_vars, wrf_plots):
                 else:
                     print('DX_NMM not found, assuming you are running the ARW core')
                     self.wrf_core='ARW'
-            self.get_atts()
+                self.get_atts()
         except:
             print('\n \n \n \n SOMETHING WENT WRONG.\n This is likely because your file path is incorrect \n   please try again')
             self.dataset=None
@@ -2083,11 +2157,13 @@ class wrf_file(calc_vars, wrf_plots):
         return full_array, stag
 
 
-    def get_var(self,var,multi=False):
+    def get_var(self,var,level=False,multi=False):
 
 
         """get WRF variables from the file, destagger if necessary
         can use list_var to see which variables your file contains.
+        Adding optional level argument, default is false, which means get the variable
+        if True, get the levels associated with that variable
 
         Arguements: 
         -----------
@@ -2159,23 +2235,40 @@ class wrf_file(calc_vars, wrf_plots):
                 if stag == "":
                     stag = '-'
             else:
-                vartype    =  input_var.dtype
-                numDims    =  input_var.ndim
-                dimSizes   =  input_var.shape
-                dimNames   =  input_var.dimensions
-                try:
-                   varAttsandVals={}
-                   for att in input_var.ncattrs():
-                       varAttsandVals[att]=input_var.getncattr(att)
-                except:
-                    pass
-                try:
-                    stag           = input_var.stagger
-                except:
-                    stag = '-'
-                if stag == "":
-                    stag = '-'
-
+                if (self.file_type == 'grb'):
+                    vartype    =  'fake'
+                    numDims    =  input_var['ndims']
+                    dimSizes   =  input_var['shape']
+                    dimNames   =  'fake'
+                    try:
+                       varAttsandVals={}
+                       for att in input_var.ncattrs():
+                           varAttsandVals[att]=input_var.getncattr(att)
+                    except:
+                        pass
+                    try:
+                        stag           = input_var.stagger
+                    except:
+                        stag = '-'
+                    if stag == "":
+                        stag = '-'
+                elif (self.file_type == 'nc'):
+                    vartype    =  input_var.dtype
+                    numDims    =  input_var.ndim
+                    dimSizes   =  input_var.shape
+                    dimNames   =  input_var.dimensions
+                    try:
+                       varAttsandVals={}
+                       for att in input_var.ncattrs():
+                           varAttsandVals[att]=input_var.getncattr(att)
+                    except:
+                        pass
+                    try:
+                        stag           = input_var.stagger
+                    except:
+                        stag = '-'
+                    if stag == "":
+                        stag = '-'
 
             if self.wrf_core == 'NMM':
         #        print 'ASSUMING ALL NMM HORIZONTAL VARIABLES ARE NOTSTAGGERED, NOT SURE IF THIS IS CORRECT'
@@ -2207,7 +2300,13 @@ class wrf_file(calc_vars, wrf_plots):
             if use_NIO:
                 data_array=input_var.get_value()
             else:
-                data_array=input_var[:]
+                if self.file_type == 'grb':
+                    if not level:
+                        data_array=input_var['data']
+                    else:
+                        data_array=input_var['levels']
+                elif self.file_type == 'nc':
+                    data_array=input_var[:]
         if (multi == True):
             return data_array
 
@@ -2275,7 +2374,8 @@ class wrf_file(calc_vars, wrf_plots):
             except:
                 time_list=[]
             for ti in range(len(data_array)):
-                time_list.append(''.join(data_array[ti]))
+                new_data_array = [x.decode('utf-8') for x in data_array[ti]]
+                time_list.append(''.join(new_data_array[ti]))
 
             del(data_array)
             data_array=time_list
@@ -2369,17 +2469,17 @@ class wrf_file(calc_vars, wrf_plots):
                     if (stag == 'Z'):
                         BT_TOTAL=BT_TOTAL+1
 
-                    #variable_dims=int(len(n.shape(wrf_file_m.niofile.variables[var_desired].get_value())))
-                    variable_dims=int(len(n.shape(wrf_file_m.dataset.variables[var_desired].get_value())))
-                    #variable_dims=len(n.shape(wrf_file_m.get_var(var_desired,multi=True)))
+                    #variable_dims=int(len(np.shape(wrf_file_m.niofile.variables[var_desired].get_value())))
+                    variable_dims=int(len(np.shape(wrf_file_m.dataset.variables[var_desired].get_value())))
+                    #variable_dims=len(np.shape(wrf_file_m.get_var(var_desired,multi=True)))
 
                     if (variable_dims == 4):
-                        total_array=n.zeros((NTIMES,BT_TOTAL,SN_TOTAL,WE_TOTAL),dtype=n.float32)
+                        total_array=np.zeros((NTIMES,BT_TOTAL,SN_TOTAL,WE_TOTAL),dtype=np.float32)
                     elif (variable_dims == 3):
-                        total_array=n.zeros((NTIMES,SN_TOTAL,WE_TOTAL),dtype=n.float32)
+                        total_array=np.zeros((NTIMES,SN_TOTAL,WE_TOTAL),dtype=np.float32)
                     else:
                         print(' need to add code to use this type of variable')
-                        print(n.shape(variable_dims))
+                        print(np.shape(variable_dims))
 
                     first_time = False
 

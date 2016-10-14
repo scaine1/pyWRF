@@ -1,0 +1,254 @@
+001,    PRES ,  Pressure                                                ,Pa
+002,    PRMSL,  Pressure reduced to MSL                                 ,Pa
+003,    PTEND,  Pressure tendency                                       ,Pa s-1
+004,    PVORT,  Potential vorticity                                     ,K m2 kg-1 s-1
+005,    ICAHT,  ICAO Standard Atmosphere reference height               ,m
+006,    GP   ,  Geopotential                                            ,m2 s-2
+007,    HGT  ,  Geopotential height                                     ,gpm
+008,    DIST ,  Geometric height                                        ,m
+009,    HSTDV,  Standard deviation of height                            ,m
+010,    TOZNE,  Total ozone                                             ,Dobson
+011,    TMP  ,  Temperature                                             ,K
+012,    VTMP ,  Virtual temperature                                     ,K
+013,    POT  ,  Potential temperature                                   ,K
+014,    EPOT ,  Pseudo-adiabatic potential temperature                  ,K
+015,    TMAX ,  Maximum temperature                                     ,K
+016,    TMIN ,  Minimum temperature                                     ,K
+017,    DPT  ,  Dewpoint temperature                                    ,K
+018,    DEPR ,  Dewpoint depression (or deficit)                        ,K
+019,    LAPR ,  Lapse rate                                              ,K m-1
+020,    VIS  ,  Visibility                                              ,m
+021,    RDSP1,  Radar spectra (1)                                       ,-
+022,    RDSP2,  Radar spectra (2)                                       ,-
+023,    RDSP3,  Radar spectra (3)                                       ,-
+024,    PLI  ,  Parcel lifted index (to 500hPa)                         ,K
+025,    TMP A,  Temperature anomaly                                     ,K
+026,    PRESA,  Pressure anomaly                                        ,Pa
+027,    GPA  ,  Geopotential height anomaly                             ,gpm
+028,    WVSP1,  Wave spectra (1)                                        ,-
+029,    WVSP2,  Wave spectra (2)                                        ,-
+030,    WVSP3,  Wave spectra (3)                                        ,-
+031,    WDIR ,  Wind direction                                          ,deg
+032,    WIND ,  Wind speed                                              ,m s-1
+033,    UGRD ,  u-component of wind                                     ,m s-1
+034,    VGRD ,  v-component of wind                                     ,m s-1
+035,    STRM ,  Stream function                                         ,m2 s-1
+036,    VPOT ,  Velocity potential                                      ,m2 s-1
+037,    MNTSF,  Montgomery stream function                              ,m2 s-2
+038,    SGCVV,  Sigma coordinate vertical velocity                      ,s-1
+039,    VVEL ,  Vertical velocity (pressure)                            ,Pa s-1
+040,    DZDT ,  Vertical velocity (geometric)                           ,m s-1
+041,    ABSV ,  Absolute vorticity                                      ,s-1
+042,    ABS D,  Absolute divergence                                     ,s-1
+043,    RELV ,  Relative vorticity                                      ,s-1
+044,    RELD ,  Relative divergence                                     ,s-1
+045,    VUCSH,  Vertical u-component shear                              ,s-1
+046,    VVCSH,  Vertical v-component shear                              ,s-1
+047,    DIR C,  Direction of current                                    ,deg
+048,    SP C ,  Speed of current                                        ,m s-1
+049,    UOGRD,  u-component of current                                  ,m s-1
+050,    VOGRD,  v-component of current                                  ,m s-1
+051,    SPFH ,  Specific humidity                                       ,kg kg-1
+052,    RH   ,  Relative humidity                                       ,%
+053,    MIXR ,  Humidity mixing ratio                                   ,kg kg-1
+054,    PWAT ,  Precipitable water                                      ,kg m-2
+055,    VAPP ,  Vapor pressure                                          ,Pa
+056,    SAT D,  Saturation deficit                                      ,Pa
+057,    EVP  ,  Evaporation                                             ,kg m-2
+058,    C ICE,  Cloud ice                                               ,kg m-2
+059,    PRATE,  Precipitation rate                                      ,kg m-2 s-1
+060,    TSTM ,  Thunderstorm probability                                ,%
+061,    A_PCP,  Total precipitation                                     ,kg m-2
+062,    NCPCP,  Large scale precipitation                               ,kg m-2
+063,    ACPCP,  Convective precipitation                                ,kg m-2
+064,    SRWEQ,  Snowfall rate water equivalent                          ,kg m-2 s-1
+065,    WEASD,  Water equivalent of accumulated snow depth              ,kg m-2
+066,    SNO D,  Snow depth                                              ,m
+067,    MIXHT,  Mixed layer depth                                       ,m
+068,    TTHDP,  Transient thermocline depth                             ,m
+069,    MTHD ,  Main thermocline depth                                  ,m
+070,    MTH A,  Main thermocline anomaly                                ,m
+071,    TCDC ,  Total cloud cover                                       ,%
+072,    CDCON,  Convective cloud cover                                  ,%
+073,    L CDC,  Low cloud cover                                         ,%
+074,    M CDC,  Medium cloud cover                                      ,%
+075,    H CDC,  High cloud cover                                        ,%
+076,    C WAT,  Cloud water                                             ,kg m-2
+077,    BLI  ,  Best lifted index (to 500 hPa)                          ,K
+078,    SNO C,  Convective snow                                         ,kg m-2
+079,    SNO L,  Large scale snow                                        ,kg m-2
+080,    WTMP ,  Water temperature                                       ,K
+081,    LAND ,  Land cover                                              ,fraction
+082,    DSL M,  Deviation of sea level from mean                        ,m
+083,    SFCR ,  Surface roughness                                       ,m
+084,    ALBDO,  Albedo                                                  ,%
+085,    TSOIL,  Soil temperature                                        ,K
+086,    SOILM,  Soil moisture content                                   ,kg m-2
+087,    VEG  ,  Vegetation                                              ,%
+088,    SALTY,  Salinity                                                ,kg kg-1
+089,    DEN  ,  Density                                                 ,kg m-3
+090,    RUNOF,  Water runoff                                            ,kg m-2
+091,    ICEC ,  Ice cover                                               ,fraction
+092,    ICETK,  Ice thickness                                           ,m
+093,    DICED,  Direction of ice drift                                  ,deg
+094,    SICED,  Speed of ice drift                                      ,m s-1
+095,    U ICE,  u-component of ice drift                                ,m s-1
+096,    V ICE,  v-component of ice drift                                ,m s-1
+097,    ICE G,  Ice growth rate                                         ,m s-1
+098,    ICE D,  Ice divergence                                          ,s-1
+099,    SNO M,  Snow melt                                               ,kg m-2
+100,    HTSGW,  Significant height of combined wind waves and swell     ,m
+101,    WVDIR,  Direction of wind waves                                 ,deg
+102,    WVHGT,  Significant height of wind waves                        ,m
+103,    WVPER,  Mean period of wind waves                               ,s
+104,    SWDIR,  Direction of swell waves                                ,deg
+105,    SWELL,  Significant height of swell waves                       ,m
+106,    SWPER,  Mean period of swell waves                              ,s
+107,    DIRPW,  Primary wave direction                                  ,deg
+108,    PERPW,  Primary wave mean period                                ,s
+109,    DIRSW,  Secondary wave direction                                ,deg
+110,    PERSW,  Secondary wave mean period                              ,s
+111,    NSWRS,  Net short-wave radiation flux (surface)                 ,W m-2
+112,    NLWRS,  Net longwave radiation flux (surface)                   ,W m-2
+113,    NSWRT,  Net short-wave radiation flux (top of atmosphere)       ,W m-2
+114,    NLWRT,  Net longwave radiation flux (top of atmosphere)         ,W m-2
+115,    LWAVR,  Long-wave radiation flux                                ,W m-2
+116,    SWAVR,  Short-wave radiation flux                               ,W m-2
+117,    G RAD,  Global radiation flux                                   ,W m-2
+118,    BRTMP,  Brightness temperature                                  ,K
+119,    LWRAD,  Radiance (with respect to wave number)                  ,W m-1 sr-1
+120,    SWRAD,  Radiance (with respect to wave length)                  ,W m-3 sr-1
+121,    LHTFL,  Latent heat flux                                        ,W m-2
+122,    SHTFL,  Sensible heat flux                                      ,W m-2
+123,    BLYDP,  Boundary layer dissipation                              ,W m-2
+124,    UFLX ,  Momentum flux u-component                              ,N m-2
+125,    VFLX ,  Momentum flux v-component                              ,N m-2
+126,    WMIXE,  Wind mixing energy                                      ,J
+127,    IMG D,  Image data                                              ,-
+128,    MSLSA,  Mean sea level pressure (standard atmosphere)           ,Pa
+129,    MSLMA,  Mean sea level pressure (MAPS system reduction)         ,Pa
+130,    MSLET,  Mean sea level pressure (Eta model reduction)           ,Pa
+131,    LFTX ,  Surface lifted index                                    ,K
+132,    4LFTX,  Best (4 layer) lifted index                             ,K
+133,    K X  ,  K index                                                 ,K
+134,    S X  ,  Sweat index                                             ,aK
+135,    MCONV,  Horizontal moisture divergence                          ,kg kg-1 s-1
+136,    VSSH ,  Vertical speed shear                                    ,s-1
+137,    TSLSA,  3-hr pressure tendency std. atmos. reduction            ,Pa s-1
+138,    BVF2 ,  Brunt-Vaisala frequency (squared)                       ,s-2
+139,    PV MW,  Potential vorticity (density weighted)                  ,s-1 m-1
+140,    CRAIN,  Categorical rain (yes=1; no=0)                          ,-
+141,    CRFZR,  Categorical freezing rain (yes=1; no=0)                 ,-
+142,    CICEP,  Categorical ice pellets (yes=1; no=0)                   ,-
+143,    CSNOW,  Categorical snow (yes=1; no=0)                          ,-
+144,    SOILW,  Volumetric soil moisture content                        ,fraction
+145,    PEVPR,  Potential evaporation rate                              ,W m-2
+146,    CWORK,  Cloud workfunction                                      ,J kg-1
+147,    U-GWD,  Zonal flux of gravity wave stress                       ,N m-2
+148,    V-GWD,  Meridional flux of gravity wave stress                  ,N m-2
+149,    PV   ,  Potential vorticity                                     ,m2 s-1 kg-1
+150,    COVMZ,  Covariance between meridional and zonal components of the wind: defined as [uv]-[u][v]; where [] indicates the mean over the indicated time span.       ,m2 s-2
+151,    COVTZ,  Covariance between temperature and zonal components of the wind: defined as [uT]-[u][T]; where [] indicates the mean over the indicated time span.      ,[K]*[m s-1]
+152,    COVTM,  Covariance between temperature and meridional components of the wind: defined as [vT]-[v][T]; where [] indicates the mean over the indicated time span. ,[K]*[m s-1]
+153,    CLWMR,  Cloud water mixing ratio                                ,kg kg-1
+154,    O3MR ,  Ozone mixing ratio                                      ,kg kg-1
+155,    GFLUX,  Ground heat flux                                        ,W m-2
+156,    CIN  ,  Convective inhibition                                   ,J kg-1
+157,    CAPE ,  Convective available potential energy                   ,J kg-1
+158,    TKE  ,  Turbulent kinetic energy                                ,J kg-1
+159,    CONDP,  Condesation pressure of parcel lifted from indicated surface    ,Pa
+160,    CSUSF,  Clear sky upward solar flux                             ,W m-2
+161,    CSDSF,  Clear sky downward solar flux                           ,W m-2
+162,    CSULF,  Clear sky upward longwave flux                          ,W m-2
+163,    CSDLF,  Clear sky downward longwave flux                        ,W m-2
+164,    CFNSF,  Cloud forcing net solar flux                            ,W m-2
+165,    CFNLF,  Cloud forcing net longwave flux                         ,W m-2
+166,    VBDSF,  Visible beam downward solar flux                        ,W m-2
+167,    VDDSF,  Visible diffuse downward solar flux                     ,W m-2
+168,    NBDSF,  Near IR beam downward solar flux                        ,W m-2
+169,    NDDSF,  Near IR diffuse downward solar flux                     ,W m-2
+170,    RWMR ,  Rain water mixing ratio                                 ,-
+171,    SNMR ,  Snow mixing ratio                                       ,-
+172,    M FLX,  Momentum flux                                           ,N m-2
+173,    LMH  ,  Mass point model surface                                ,-
+174,    LMV  ,  Velocity point model surface                            ,-
+175,    SGLYR,  Nearby model layer number (from bottom up)              ,-
+176,    NLAT ,  Latitude (-90 to +90)                                   ,deg
+177,    ELON ,  East longitude (0-360)                                  ,deg
+178,    UMAS ,  Mass weighted u                                         ,-
+179,    VMAS ,  Mass weighted v                                         ,-
+180,    GUST ,  Surface wind gust                                       ,-
+181,    LPSX ,  x-gradient of log pressure                              ,m-1
+182,    LPSY ,  y-gradient of log pressure                              ,m-1
+183,    HGTX ,  x-gradient of height                                    ,m m-1
+184,    HGTY ,  y-gradient of height                                    ,m m-1
+185,    TPFI ,  Turbulence potential forecast index                     ,-
+186,    TIPD ,  Total icing potential diagnostic                        ,-
+187,    LTNG ,  Lightning                                               ,-
+188,         ,  Reserved                                                ,-
+189,    VPTMP,  Virtual potential temperature                           ,K
+190,    CBUW ,  Covariance between u and omega                          ,[m s-1]*[Pa s-1]
+191,    CBVW ,  Covariance between v and omega                          ,[m s-1]*[Pa s-1]
+192,    CBUQ ,  Covariance between u and specific humidity              ,[m s-1]*[gm gm-1]
+193,    CBVQ ,  Covariance between v and specific humidity              ,[m s-1]*[gm gm-1]
+194,    CBTW ,  Covariance between T and omega                          ,[K]*[Pa s-1]
+195,    CBQW ,  Covariance between specific humidity and omega          ,[gm gm-1]*[Pa s-1]
+196,    CBMZW,  Covariance between v and u                              ,m2 s-2
+197,    CBTZW,  Covariance between u and T                              ,[K]*[m s-1]
+198,    CBTMW,  Covariance between v and T                              ,[K]*[m s-1]
+199,    EVBS ,  Direct evaporation from bare soil                       ,
+200,    EVCW ,  Canopy water evaporation                                ,
+201,    ICWAT,  Ice-free water surface                                  ,%
+202,         ,  Reserved                                                ,
+203,         ,  Reserved                                                ,
+204,    DSWRF,  Downward shortwave radiation flux                       ,W m-2
+205,    DLWRF,  Downward longwave radiation flux                        ,W m-2
+206,    UVI  ,  Ultra violet index (1 hour integration centered at solar noon)       ,J m-2
+207,    MSTAV,  Moisture availability                                   ,%
+208,    SFEXC,  Exchange coefficient                                    ,(kg m-3)(m s-1)
+209,    MIXLY,  No. of mixed layers next to surface                     ,a-
+210,    TRANS,  Transpiration                                           ,-
+211,    USWRF,  Upward shortwave radiation flux                         ,W m-2
+212,    ULWRF,  Upward longwave radiation flux                          ,W m-2
+213,    CDLYR,  Amount of non-convective cloud                          ,%
+214,    CPRAT,  Convective precipitation rate                          ,kg m-2 s-1
+215,    TTDIA,  Temperature tendency by all physics                    ,K s-1
+216,    TTRAD,  Temperature tendency by all radiation                  ,K s-1
+217,    TTPHY,  Temperature tendency by non-radiation physics          ,K s-1
+218,    PREIX,  precip.index(0.0-1.00)                                 ,fraction
+219,    TSD1D,  Std. dev. of IR T over 1x1 deg area                    ,K
+220,    NLGSP,  Natural log of surface pressure                        ,ln(kPa)
+221,    HPBL ,  Planetary boundary layer height                        ,m
+222,    5WAVH,  5-wave geopotential height                             ,gpm
+223,    CNWAT,  Plant canopy surface water                             ,kg m-2
+224,    SOTYP,  Soil type (as in Zobler)                               ,-
+225,    VGTYP,  Vegetation type (as in SiB)                            ,-
+226,    BMIXL,  Blackadar's mixing length scale                        ,m
+227,    AMIXL,  Asymptotic mixing length scale                         ,m
+228,    PEVAP,  Potential evaporation                                  ,kg m-2
+229,    SNOHF,  Snow phase-change heat flux                            ,W m-2
+230,    5WAVA,  5-wave geopotential height anomaly                     ,-
+231,    MFLUX,  Convective cloud mass flux                             ,Pa s-1
+232,    DTRF ,  Downward total radiation flux                          ,W m-2
+233,    UTRF ,  Upward total radiation flux                            ,W m-2
+234,    BGRUN,  Baseflow-groundwater runoff                            ,kg m-2
+235,    SSRUN,  Storm surface runoff                                   ,kg m-2
+236,         ,  Reserved                                               ,-
+237,    O3TOT,  Total ozone                                            ,kg m-2
+238,    SNOWC,  Snow cover                                             ,%
+239,    SNO T,  Snow temperature                                       ,K
+240,    COVTW,  Covariance between temperature and vertical component of the wind: defined as [wT]-[w][T]; where [] indicates the mean over the indicated time span.  ,-
+241,    LRGHR,  Large scale condensation heat rate                     ,K s-1
+242,    CNVHR,  Deep convective heating rate                           ,K s-1
+243,    CNVMR,  Deep convective moistening rate                        ,kg kg-1 s-1
+244,    SHAHR,  Shallow convective heating rate                        ,K s-1
+245,    SHAMR,  Shallow convective moistening rate                     ,kg kg-1 s-1
+246,    VDFHR,  Vertical diffusion heating rate                        ,K s-1
+247,    VDFUA,  Vertical diffusion zonal acceleration                  ,m s-2
+248,    VDFVA,  Vertical diffusion meridional acceleration             ,m s-2
+249,    VDFMR,  Vertical diffusion moistening rate                     ,kg kg-1 s-1
+250,    SWHR ,  Solar radiative heating rate                           ,K s-1
+251,    LWHR ,  Long wave radiative heating rate                       ,K s-1
+252,    CD   ,  Drag coefficient                                       ,-
+253,    FRICV,  Friction velocity                                      ,m s-1
+254,    RI   ,  Richardson number                                      ,-
