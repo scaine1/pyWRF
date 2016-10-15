@@ -33,7 +33,7 @@ else:
 import wrf_user_unstagger
 import perturbation_variables
 import numpy as np
-import pylab as pl
+from matplotlib import pylab as pl
 import scipy as s
 #from mpl_toolkits.basemap import Basemap, shiftgrid
 from mpl_toolkits import basemap
@@ -79,13 +79,13 @@ class calc_vars():
         -------
         Temperature in Kelvin
         """
-        if (pressure == None):            
+        if (pressure is None):            
             try:
                pressure=self.variable_dict['PRES']
             except:
                pressure=self.get_var('PRES')
 
-        if (theta == None):            
+        if (theta is None):            
             try:
                theta=self.variable_dict['THETA']
             except:
