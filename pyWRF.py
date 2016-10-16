@@ -2375,8 +2375,7 @@ class wrf_file(calc_vars, wrf_plots):
                 time_list=[]
             for ti in range(len(data_array)):
                 new_data_array = [x.decode('utf-8') for x in data_array[ti]]
-                time_list.append(''.join(new_data_array[ti]))
-
+            time_list.append(''.join(new_data_array))
             del(data_array)
             data_array=time_list
 
