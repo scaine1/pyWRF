@@ -354,6 +354,105 @@ class calc_vars():
 
         return sph
 
+#
+#    def get_ij_lat_long(self,lat_array,long_array,user_lat,user_lon):
+#        """This function is designed to return the closest grid point to your chosen lat, long.
+#        Inputs:
+#        ------
+#            lat_array: (i.e. XLAT)
+#            lon_array: (i.e. XLONG)
+#            user_lat:  The lat you want to find
+#            user_lon: The long you want to find.
+#        Returns:
+#        --------
+#            i,j coordinate of the WRF grid point closest to your chosen lat,long.
+#            where i corresponds to ns dimension and j corresponds to the we dimenion (I think)
+#
+#
+#        Notes:
+#        ------
+#            lat_array and lon_array currently needs to be 3 dimensional.
+#            the first dimension is time, which wrf creates for no good 
+#            reason unles you have a moving nest.
+#            will try and make this script smarter so that it doesnt die
+#            if xlat and xlon is 2d.
+#            """
+#
+#
+#        if (user_lat < np.min(lat_array)) | (user_lat > np.max(lat_array)) |  (user_lon < np.min(long_array)) | (user_lon > np.max(long_array)):
+#            print('point outside array bounds, skipping')
+#            return np.nan,np.nan
+#
+#
+#        del_lat=del_lon=2.0   #2 degrees! this should easily be enough for all possible cases
+#        i=j=[0,0]
+#
+#        loop=1
+#        div_factor_lat=2.0
+#        div_factor_lon=2.0
+#        loop_count=0.
+#        while loop == 1:
+#            while (len(i) > 1) | ( len(j) >1):
+#                upper_lat=user_lat+del_lat
+#                lower_lat=user_lat-del_lat
+#                upper_lon=user_lon+del_lon
+#                lower_lon=user_lon-del_lon
+#
+#                if (len(np.shape(lat_array)) == 3):
+#                    lat_ij=np.where((lat_array[0,:,:] < upper_lat) & (lat_array[0,:,:] >= lower_lat),1,0)
+#                    lon_ij=np.where((long_array[0,:,:] > lower_lon) & (long_array[0,:,:] <= upper_lon),1,0)
+#
+#                elif (len(np.shape(lat_array)) == 2):
+#                    lat_ij=np.where((lat_array[:,:] < upper_lat) & (lat_array[:,:] >= lower_lat),1,0)
+#                    lon_ij=np.where((long_array[:,:] > lower_lon) & (long_array[:,:] <= upper_lon),1,0)
+#                else:
+#                    pass
+#                i,j = np.where((lat_ij == 1) & (lon_ij==1))
+#
+#                del_lat_old=del_lat
+#                del_lon_old=del_lon
+#                del_lat=del_lat/div_factor_lat
+#                del_lon=del_lon/div_factor_lon
+#
+#                if (loop_count >= 2000):
+#                    print('loop greater than 2000')
+#                    #try:
+#                    if 1==1:
+#                        #print i[0],j[0]
+#                        #print lat_array[0,j[0],i[0]]
+#                        #print lon_array[0,j[0],i[0]]
+#                        print('error is', user_lat - i[0], user_long - j[0])
+#                        return i[0], j[0]
+#                    #except:
+#                    #    print('passing')
+#                    #    pass
+#
+#                loop_count+=1
+#                #if loop_count == 70:
+#                #    raw_input('pause')
+#
+#            if (np.shape(i)[0] == 0):
+#                del_lat=del_lat_old*div_factor_lat
+#                del_lat=del_lat*(99/100.)
+#                i=[0,0]
+#            if (np.shape(j)[0] == 0): 
+#                del_lon=del_lon_old*div_factor_lon
+#                del_lon=del_lon*(99/100.)
+#                j=[0,0]
+#
+#            #print(loop_count)
+#            if (np.shape(i)[0] == 1) & (np.shape(j)[0] == 1): 
+#                loop=0.
+#
+#        print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
+#        print(i,j)
+#        if (len(np.shape(lat_array)) == 3):
+#            print('result of the above coordinate points is     (',lat_array[0,i[0],j[0]],',' ,long_array[0,i[0],j[0]],')')
+#        elif (len(np.shape(lat_array)) == 2):
+#            print('result of the above coordinate points is     (',lat_array[i[0],j[0]],',' ,long_array[i[0],j[0]],')')
+#        print('')
+#        return i[0],j[0]
+
 
     def get_ij_lat_long(self,lat_array,long_array,user_lat,user_lon):
         """This function is designed to return the closest grid point to your chosen lat, long.
@@ -382,76 +481,32 @@ class calc_vars():
         if (user_lat < np.min(lat_array)) | (user_lat > np.max(lat_array)) |  (user_lon < np.min(long_array)) | (user_lon > np.max(long_array)):
             print('point outside array bounds, skipping')
             return np.nan,np.nan
+        
 
+        lat_diff=np.abs(lat_array-user_lat)
+        lon_diff=np.abs(long_array-user_lon)
+        lat_min_array=np.where((lat_diff==np.min(lat_diff)) & (lat_diff.mask == False))
+        lon_min_array=np.where((lon_diff==np.min(lon_diff)) & (lat_diff.mask == False))
+        #dimension are Time,NS,WE
+        #so lat is     0   ,1, 0
+        #so lon is     0,   0  1
+        #will reference from -ve so we don't have to worry about whether we have a time dimension
+        lat_min=np.unique(lat_min_array[-2])
+        lon_min=np.unique(lon_min_array[-1])
+        if len(lat_min) > 1:
+            print('warning not unique minimum for latitude')
+        if len(lon_min) > 1:
+            print('warning not unique minimum for longitude')
+    
+        if(len(np.shape(lat_array)) == 3):
+            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
+            print('                                  result was (' ,lat_array[0,lat_min[0],lon_min[0]],',',long_array[0,lat_min[0],lon_min[0]],')')
+        elif(len(np.shape(lat_array)) == 2):
+            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
+            print('                                  result was (' ,lat_array[lat_min[0],lon_min[0]],',',long_array[lat_min[0],lon_min[0]],')')
 
-        del_lat=del_lon=2.0   #2 degrees! this should easily be enough for all possible cases
-        i=j=[0,0]
+        return lat_min[0],lon_min[0]
 
-        loop=1
-        div_factor_lat=2.0
-        div_factor_lon=2.0
-        loop_count=0.
-        while loop == 1:
-            while (len(i) > 1) | ( len(j) >1):
-                upper_lat=user_lat+del_lat
-                lower_lat=user_lat-del_lat
-                upper_lon=user_lon+del_lon
-                lower_lon=user_lon-del_lon
-
-                if (len(np.shape(lat_array)) == 3):
-                    lat_ij=np.where((lat_array[0,:,:] < upper_lat) & (lat_array[0,:,:] >= lower_lat),1,0)
-                    lon_ij=np.where((long_array[0,:,:] > lower_lon) & (long_array[0,:,:] <= upper_lon),1,0)
-
-                elif (len(np.shape(lat_array)) == 2):
-                    lat_ij=np.where((lat_array[:,:] < upper_lat) & (lat_array[:,:] >= lower_lat),1,0)
-                    lon_ij=np.where((long_array[:,:] > lower_lon) & (long_array[:,:] <= upper_lon),1,0)
-                else:
-                    pass
-
-                i,j = np.where((lat_ij == 1) & (lon_ij==1))
-
-                del_lat_old=del_lat
-                del_lon_old=del_lon
-                del_lat=del_lat/div_factor_lat
-                del_lon=del_lon/div_factor_lon
-
-                if (loop_count >= 2000):
-                    print('loop greater than 2000')
-                    try:
-                        #print i[0],j[0]
-                        #print lat_array[0,j[0],i[0]]
-                        #print lon_array[0,j[0],i[0]]
-                        print('error is', user_lat - i[0], user_long - j[0])
-                        return i[0], j[0]
-                    except:
-                        print('passing')
-                        pass
-
-                loop_count+=1
-                #if loop_count == 70:
-                #    raw_input('pause')
-
-            if (np.shape(i)[0] == 0):
-                del_lat=del_lat_old*div_factor_lat
-                del_lat=del_lat*(99/100.)
-                i=[0,0]
-            if (np.shape(j)[0] == 0): 
-                del_lon=del_lon_old*div_factor_lon
-                del_lon=del_lon*(99/100.)
-                j=[0,0]
-
-            #print(loop_count)
-            if (np.shape(i)[0] == 1) & (np.shape(j)[0] == 1): 
-                loop=0.
-
-        print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-        print(i,j)
-        if (len(np.shape(lat_array)) == 3):
-            print('result of the above coordinate points is     (',lat_array[0,i[0],j[0]],',' ,long_array[0,i[0],j[0]],')')
-        elif (len(np.shape(lat_array)) == 2):
-            print('result of the above coordinate points is     (',lat_array[i[0],j[0]],',' ,long_array[i[0],j[0]],')')
-        print('')
-        return i[0],j[0]
 
 
     def interp_to_height(self,height_levels, height_on_model_levels,input_variable):
