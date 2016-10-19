@@ -118,19 +118,19 @@ class calc_vars():
 
         """
 
-        if (qvapor == None):
+        if (qvapor is None):
             try:
                qvapor=self.variable_dict['QVAPOR']
             except:
                qvapor=self.get_var('QVAPOR')
 
-        if (pressure == None):            
+        if (pressure is None):            
             try:
                pressure=self.variable_dict['PRES']
             except:
                pressure=self.get_var('PRES')
 
-        if (temperature == None):            
+        if (temperature is None):            
             try:
                temperature=self.variable_dict['TEMP']
             except:
@@ -192,13 +192,13 @@ class calc_vars():
 
 
         """
-        if (qvapor == None):
+        if (qvapor is None):
             try:
                qvapor=self.variable_dict['QVAPOR']
             except:
                qvapor=self.get_var('QVAPOR')
 
-        if (tmk == None):            
+        if (tmk is None):            
             try:
                tmk=self.variable_dict['TEMP']
             except:
@@ -210,8 +210,6 @@ class calc_vars():
         eps=0.622
 
         vtmk=tmk * (eps+qvapor_temp)/(eps*(1.+qvapor_temp))
-
-
         return vtmk
 
 
@@ -232,13 +230,13 @@ class calc_vars():
         Need to modify this so that it does not matter if pressure is in pa or hpa
 
         """
-        if (qvapor == None):
+        if (qvapor is None):
             try:
                qvapor=self.variable_dict['QVAPOR']
             except:
                qvapor=self.get_var('QVAPOR')
 
-        if (pressure == None):            
+        if (pressure is None):            
             try:
                pressure=self.variable_dict['PRES']
             except:
@@ -319,7 +317,7 @@ class calc_vars():
         """
 
         print('calculating specific humidity in kg/kg')
-        if (qvapor == None):
+        if (qvapor is None):
             try:
                qvapor=self.variable_dict['QVAPOR']
             except:
@@ -344,7 +342,7 @@ class calc_vars():
         """
 
         print('calculating specific humidity in kg/kg')
-        if (qvapor == None):
+        if (qvapor is None):
             try:
                qvapor=self.variable_dict['QVAPOR']
             except:
@@ -353,106 +351,6 @@ class calc_vars():
         sph=qvapor/(1+qvapor)
 
         return sph
-
-#
-#    def get_ij_lat_long(self,lat_array,long_array,user_lat,user_lon):
-#        """This function is designed to return the closest grid point to your chosen lat, long.
-#        Inputs:
-#        ------
-#            lat_array: (i.e. XLAT)
-#            lon_array: (i.e. XLONG)
-#            user_lat:  The lat you want to find
-#            user_lon: The long you want to find.
-#        Returns:
-#        --------
-#            i,j coordinate of the WRF grid point closest to your chosen lat,long.
-#            where i corresponds to ns dimension and j corresponds to the we dimenion (I think)
-#
-#
-#        Notes:
-#        ------
-#            lat_array and lon_array currently needs to be 3 dimensional.
-#            the first dimension is time, which wrf creates for no good 
-#            reason unles you have a moving nest.
-#            will try and make this script smarter so that it doesnt die
-#            if xlat and xlon is 2d.
-#            """
-#
-#
-#        if (user_lat < np.min(lat_array)) | (user_lat > np.max(lat_array)) |  (user_lon < np.min(long_array)) | (user_lon > np.max(long_array)):
-#            print('point outside array bounds, skipping')
-#            return np.nan,np.nan
-#
-#
-#        del_lat=del_lon=2.0   #2 degrees! this should easily be enough for all possible cases
-#        i=j=[0,0]
-#
-#        loop=1
-#        div_factor_lat=2.0
-#        div_factor_lon=2.0
-#        loop_count=0.
-#        while loop == 1:
-#            while (len(i) > 1) | ( len(j) >1):
-#                upper_lat=user_lat+del_lat
-#                lower_lat=user_lat-del_lat
-#                upper_lon=user_lon+del_lon
-#                lower_lon=user_lon-del_lon
-#
-#                if (len(np.shape(lat_array)) == 3):
-#                    lat_ij=np.where((lat_array[0,:,:] < upper_lat) & (lat_array[0,:,:] >= lower_lat),1,0)
-#                    lon_ij=np.where((long_array[0,:,:] > lower_lon) & (long_array[0,:,:] <= upper_lon),1,0)
-#
-#                elif (len(np.shape(lat_array)) == 2):
-#                    lat_ij=np.where((lat_array[:,:] < upper_lat) & (lat_array[:,:] >= lower_lat),1,0)
-#                    lon_ij=np.where((long_array[:,:] > lower_lon) & (long_array[:,:] <= upper_lon),1,0)
-#                else:
-#                    pass
-#                i,j = np.where((lat_ij == 1) & (lon_ij==1))
-#
-#                del_lat_old=del_lat
-#                del_lon_old=del_lon
-#                del_lat=del_lat/div_factor_lat
-#                del_lon=del_lon/div_factor_lon
-#
-#                if (loop_count >= 2000):
-#                    print('loop greater than 2000')
-#                    #try:
-#                    if 1==1:
-#                        #print i[0],j[0]
-#                        #print lat_array[0,j[0],i[0]]
-#                        #print lon_array[0,j[0],i[0]]
-#                        print('error is', user_lat - i[0], user_long - j[0])
-#                        return i[0], j[0]
-#                    #except:
-#                    #    print('passing')
-#                    #    pass
-#
-#                loop_count+=1
-#                #if loop_count == 70:
-#                #    raw_input('pause')
-#
-#            if (np.shape(i)[0] == 0):
-#                del_lat=del_lat_old*div_factor_lat
-#                del_lat=del_lat*(99/100.)
-#                i=[0,0]
-#            if (np.shape(j)[0] == 0): 
-#                del_lon=del_lon_old*div_factor_lon
-#                del_lon=del_lon*(99/100.)
-#                j=[0,0]
-#
-#            #print(loop_count)
-#            if (np.shape(i)[0] == 1) & (np.shape(j)[0] == 1): 
-#                loop=0.
-#
-#        print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-#        print(i,j)
-#        if (len(np.shape(lat_array)) == 3):
-#            print('result of the above coordinate points is     (',lat_array[0,i[0],j[0]],',' ,long_array[0,i[0],j[0]],')')
-#        elif (len(np.shape(lat_array)) == 2):
-#            print('result of the above coordinate points is     (',lat_array[i[0],j[0]],',' ,long_array[i[0],j[0]],')')
-#        print('')
-#        return i[0],j[0]
-
 
     def get_ij_lat_long(self,lat_array,long_array,user_lat,user_lon):
         """This function is designed to return the closest grid point to your chosen lat, long.
@@ -476,36 +374,68 @@ class calc_vars():
             will try and make this script smarter so that it doesnt die
             if xlat and xlon is 2d.
             """
-
+        verbose=True
 
         if (user_lat < np.min(lat_array)) | (user_lat > np.max(lat_array)) |  (user_lon < np.min(long_array)) | (user_lon > np.max(long_array)):
             print('point outside array bounds, skipping')
             return np.nan,np.nan
-        
 
         lat_diff=np.abs(lat_array-user_lat)
         lon_diff=np.abs(long_array-user_lon)
-        lat_min_array=np.where((lat_diff==np.min(lat_diff)) & (lat_diff.mask == False))
-        lon_min_array=np.where((lon_diff==np.min(lon_diff)) & (lat_diff.mask == False))
+
+        distance_diff=np.sqrt(np.square(lat_diff)+np.square(lon_diff))
+        try:
+            min_position=np.where((distance_diff==np.min(distance_diff)) & (disance_diff.mask == False))
+        except:
+            if verbose:
+                print('get_i_j warning, not a masked array')
+            min_position=np.where(distance_diff==np.min(distance_diff))
+
+        if(len(np.shape(lat_array)) == 3):
+            assert len(lat_array[min_position]) == 1
+            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
+            print('                                  result was (' ,lat_array[min_position][0],',',long_array[min_position][0],')')
+            print('')
+            return min_position[1][0],min_position[2][0]
+        elif(len(np.shape(lat_array)) == 2):
+            assert len(lat_array[min_position]) == 1
+            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
+            print('                                  result was (' ,lat_array[min_position][0],',',long_array[min_position][0],')')
+            print('')
+            return min_position[0][0],min_position[1][0]
+#        try:
+#            lat_min_array=np.where((lat_diff==np.min(lat_diff)) & (lat_diff.mask == False))
+#            lon_min_array=np.where((lon_diff==np.min(lon_diff)) & (lat_diff.mask == False))
+#        except:
+#            if verbose:
+#                print('get_i_j warning, not a masked array')
+#            lat_min_array=np.where(lat_diff==np.min(lat_diff))
+#            lon_min_array=np.where(lon_diff==np.min(lon_diff))
+
         #dimension are Time,NS,WE
         #so lat is     0   ,1, 0
         #so lon is     0,   0  1
         #will reference from -ve so we don't have to worry about whether we have a time dimension
-        lat_min=np.unique(lat_min_array[-2])
-        lon_min=np.unique(lon_min_array[-1])
-        if len(lat_min) > 1:
-            print('warning not unique minimum for latitude')
-        if len(lon_min) > 1:
-            print('warning not unique minimum for longitude')
-    
-        if(len(np.shape(lat_array)) == 3):
-            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-            print('                                  result was (' ,lat_array[0,lat_min[0],lon_min[0]],',',long_array[0,lat_min[0],lon_min[0]],')')
-        elif(len(np.shape(lat_array)) == 2):
-            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-            print('                                  result was (' ,lat_array[lat_min[0],lon_min[0]],',',long_array[lat_min[0],lon_min[0]],')')
-
-        return lat_min[0],lon_min[0]
+#        lat_min=np.unique(lat_min_array[-2])
+#        lon_min=np.unique(lon_min_array[-1])
+#        if (len(lat_min) > 1) and verbose:
+#            print('warning not unique minimum for latitude')
+#            print(lat_min)
+#        if (len(lon_min) > 1) and verbose:
+#            print('warning not unique minimum for longitude')
+#            print(lon_min)
+#
+#        if(len(np.shape(lat_array)) == 3):
+#            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
+#            print('                                  result was (' ,lat_array[0,lat_min[0],lon_min[0]],',',long_array[0,lat_min[0],lon_min[0]],')')
+#            print('')
+#        elif(len(np.shape(lat_array)) == 2):
+#            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
+#            print('                                  result was (' ,lat_array[lat_min[0],lon_min[0]],',',long_array[lat_min[0],lon_min[0]],')')
+#            print('')
+#        import ipdb;ipdb.set_trace()
+#
+#        return lat_min[0],lon_min[0]
 
 
 
@@ -969,9 +899,9 @@ class calc_vars():
 
         try:
             if use_NIO:
-                prs=self.dataset.variables['PINT'].get_value()
+                prs=self.get_var('PINT')
             else:
-                prs=self.dataset.variables['PINT'].get_value()
+                prs=self.get_var('PINT')
         except:
             print('cannt fint your variable PINT')
         try:
@@ -996,16 +926,17 @@ class calc_vars():
         # Set up grid (vertical levels = mkzh, NSdim = y = miy, WEdim = x = mjx, ) 
         if (len(np.shape(prs)) == 4):
             ntimes=np.shape(prs)[0]
-            mkzh=np.shape(prs)[1]-1
+            mkzh=np.shape(prs)[1]  #all values  variables already destaggered in Z
             mjx=np.shape(prs)[2]   # NS-DIMENSION
             miy=np.shape(prs)[3]   # WE-DIMENSION
 
-        log_p=np.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
+
+        log_p=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
         base_level=np.zeros((ntimes,mjx,miy), dtype="float")
-        ght=np.zeros((ntimes,mkzh+1,mjx,miy), dtype="float")
+        ght=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
 
         for ti in range(ntimes):
-            for k in range(mkzh+1):
+            for k in range(mkzh):
                log_p[ti,k,:,:]=np.log(prs[ti,k,:,:])
 
         rgas=287.04
@@ -1013,21 +944,20 @@ class calc_vars():
 
         for ti in range(ntimes):
             ght[ti,0,:,:] = ter[ti,:,:]
-            for k in range(1, mkzh+1):
+            for k in range(1, mkzh):
                 tv_average=(vtmk[ti,k-1,:,:]) # not doing average for some reason
                 ght[ti,k,:,:]  = ght[ti,k-1,:,:] + ((rgas*tv_average)/grav)*(log_p[ti,k-1,:,:] - log_p[ti,k,:,:])
 
         #now we have ght on staggared levels, we must destagger
-
-        ght_destag=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
-
-        for ti in range(ntimes):
-            for k in range(mkzh):
-                ght_destag[ti,k,:,:] = 0.5*( ght[ti,k,:,:] + ght[ti,k+1,:,:] )
-
-        self.variable_dict.update({'GHT':ght_destag})
-
-        return ght_destag 
+        #Actually now ght should be already destaggered because all the variables that made it were destagged 
+        #ght_destag=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
+        #for ti in range(ntimes):
+        #    for k in range(mkzh):
+        #        ght_destag[ti,k,:,:] = 0.5*( ght[ti,k,:,:] + ght[ti,k+1,:,:] )
+        #self.variable_dict.update({'GHT':ght_destag})
+        #return ght_destag 
+        self.variable_dict.update({'GHT':ght})
+        return ght
 
     def compute_extrema(self,mat,mode='wrap',window=10):
         from scipy.ndimage.filters import maximum_filter, minimum_filter
@@ -1226,12 +1156,7 @@ class wrf_plots():
                 Can add meridians and paralllels and states and lots
 
         """
-        #try:
-        #    lon=self.variable_dict['XLONG']
-        #    lat=self.variable_dict['XLAT']
-        #except KeyError:
-
-        if (lat == None) | (lon == None):
+        if (lat is None) | (lon is None):
             if self.wrf_core == 'ARW':
                 try:
                     lon=self.get_var('XLONG')
@@ -1250,15 +1175,24 @@ class wrf_plots():
                     print("found GLON AND GLAT")
                 except ValueError:
                     print("GLON AND GLAT NOT FOUND")
+            elif self.wrf_core == 'UPP':
+                lat=self.get_var('NLAT_SFC')
+                lon=self.get_var('ELON_SFC')
 
         if use_NIO:
             cen_lat=self.dataset.CEN_LAT[0]
             cen_lon=self.dataset.CEN_LON[0]
             map_proj=self.dataset.MAP_PROJ[0]
         else:
-            cen_lat=self.atts['CEN_LAT'][0]
-            cen_lon=self.atts['CEN_LON'][0]
-            map_proj=self.atts['MAP_PROJ'][0]
+            try:
+                cen_lat=self.atts['CEN_LAT'][0]
+                cen_lon=self.atts['CEN_LON'][0]
+                map_proj=self.atts['MAP_PROJ'][0]
+            except:
+                print('ERROR COULD NOT GET YOUR grid specs')
+                #cen_lat=8.776
+                #cen_lon=114.000
+                #map_proj=203
 
         if (map_proj == 1):
             print('your input data has map projection of Lambert Conformal')
@@ -1276,18 +1210,36 @@ class wrf_plots():
             #proj = 'merc'                                                                                #testing, default call with nothing is llc, else proj is user defined
             print('using plotting projection of ' +proj)
 
-
         elif (map_proj == 203):
             print('your input data has a  map projection of rotated lat/long')
             print('using plotting  projection of '+proj)
             #proj = 'lcc'                                                                                        #testing, default call with nothing is llc, else proj is user defined
-
         else:
             print('map projection not known, quitting')
             return
 
 
-        m=basemap.Basemap(projection=proj,llcrnrlon=lon[0,0,0],llcrnrlat=lat[0,0,0],urcrnrlon=lon[0,-1,-1],urcrnrlat=lat[0,-1,-1],lat_0=cen_lat,lon_0=cen_lon,resolution='h')
+        llcrnrlon=False
+        i=0
+        while not llcrnrlon:
+            llcrnrlon=lon[0,0,i]
+            i+=1
+        llcrnrlat=False
+        i=0
+        while not llcrnrlat:
+            llcrnrlat=lat[0,0,i]
+            i+=1
+        j=len(lon[0,-1,:])-1
+        urcrnrlon=False
+        while not urcrnrlon:
+            urcrnrlon=lon[0,-1,j]
+            j-=1
+        j=len(lat[0,-1,:])-1
+        urcrnrlat=False
+        while not urcrnrlat:
+            urcrnrlat=lat[0,-1,j]
+            j-=1
+        m=basemap.Basemap(projection=proj,llcrnrlon=llcrnrlon,llcrnrlat=llcrnrlat,urcrnrlon=urcrnrlon,urcrnrlat=urcrnrlat,lat_0=cen_lat,lon_0=cen_lon,resolution='h')
         x , y = m(lon[0,:,:],lat[0,:,:])
         self.map_proj=m
         self.map_x=x
@@ -1319,7 +1271,7 @@ class wrf_plots():
         Example:
         """
         #has basemap been called before?
-        if (map_proj == None):
+        if (map_proj is None):
             try:
                 m=self.map_proj
             except:
@@ -1579,7 +1531,7 @@ class wrf_plots():
 
         """
 
-        if (dbz_array == None):
+        if (dbz_array is None):
 
             if (MPscheme == 'lin'):
                 try:
@@ -1658,14 +1610,14 @@ class wrf_plots():
 
             #pl.axis(radar_range,'equal')
 
-            if title == None:
+            if title is None:
                 the_title=times[ti]
             else:
                 the_title=title
 
             pl.title(the_title,fontsize=25)
 
-            if (imagename == None):
+            if (imagename is None):
                 outimagename=times[ti]+'_dbz.png'
             else:
                 outimagename=np.str(times[ti])+'_'+imagename+'_dbz.png'
@@ -1729,14 +1681,14 @@ class wrf_plots():
         for the_time in range(start_time,end_time):
             time=times[the_time]
             pl.clf()
-            if (rainnc_full == None) & (rainc_full == None):
+            if (rainnc_full is None) & (rainc_full is None):
                 print('you have no precipitation data at all, quitting')
                 return None
 
-            if (rainnc_full == None) & (rainc_full != None):
+            if (rainnc_full is None) & (rainc_full != None):
                 rain_total = rainc_full[the_time,:,:]
 
-            if (rainc_full == None) & (rainnc_full != None):
+            if (rainc_full is None) & (rainnc_full != None):
                 rain_total = rainnc_full[the_time,:,:]
 
             if (rainc_full != None) & (rainnc_full != None):
@@ -1912,7 +1864,7 @@ class wrf_file(calc_vars, wrf_plots):
         """trying to make the pygrib object more like the netcdf object so i can use all the same routines
         also want the variable names to be the same as the old PyNIO ones
         """
-        def __init__(self,filename=None):
+        def __init__(self,filename=None,cen_file=None):
             self.filename=filename
             self.pygrib=pygrib.open(self.filename)
             self.NCEP_table=self.load_param_table(PYWRFPATH+'/library/NCEP_Parameter_Table_2.txt')
@@ -1956,9 +1908,7 @@ class wrf_file(calc_vars, wrf_plots):
                     full_array[level_count,:,:]=var_dict[key_name][level]['values']
                     level_count+=1
                 variables[key_name]={'data':full_array,'levels':levels,'ndims':n_levels,'shape':np.shape(full_array)}
-
             self.variables=variables
-
 
         def load_param_table(self,tablename):
             with open(tablename,'r') as fid:
@@ -1968,12 +1918,25 @@ class wrf_file(calc_vars, wrf_plots):
                     param_dict[int(code)]={'abbrev':abbrev.strip(),'name':name.strip(),'unit':unit.strip()}
             return param_dict
 
-    def __init__(self,filename=None):
+    def __init__(self,filename=None,cen_file=None):
         self.filename=filename
         self.variable_dict={}
+        self.atts={}
         self.plot_directory='.'
         import sys as sys
         sys.path.append('wrf_plots/')
+
+        if cen_file:
+            with open(cen_file,'r') as fid:
+                for line in fid:
+                    if line.count('clat=') == 1:
+                        clat=line.split('=')[1]
+                    if line.count('clon=') == 1:
+                        clon=line.split('=')[1]
+            self.atts['CEN_LAT']=[clat]
+            self.atts['CEN_LON']=[clon]
+            self.atts['MAP_PROJ']=[203]
+            self.wrf_core='UPP'
 
         if (filename.count('wrfout')==1) & (filename[-3:] != '.nc'):
             if use_NIO:
@@ -1987,27 +1950,26 @@ class wrf_file(calc_vars, wrf_plots):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="NULL"#should be indepeneant of NMM or WRF as it has been processed
+            self.wrf_core="UPP"        #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('wrfprs')==1) & (filename[-4:] != '.grb'):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
+            self.wrf_core="UPP"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('wrfwnd')==1) & (filename[-4:] != '.grb'):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
+            self.wrf_core="UPP"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('WRFWND')==1) & (filename[-4:] != '.grb'):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="NULL"  #should be indepeneant of NMM or WRF as it has been processed
+            self.wrf_core="UPP"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
-
 
         if (self.filename.find('wrfout') == 0) | (self.filename.find('wrfprs') == 0) | (self.filename.find('WRFPRS') == 0) | (self.filename.find('dbz_d') == 0):
             self.wrf_directory = './'
@@ -2016,7 +1978,8 @@ class wrf_file(calc_vars, wrf_plots):
                 self.wrf_directory = str(self.filename[0:self.filename.find('wrfout')])
             elif self.filename.count('dbz_d0') == 1:
                 self.wrf_directory = str(self.filename[0:self.filename.find('dbz_d0')])
-        try:
+        #try:
+        if 1==1:
             print(self.filename)
             if use_NIO:
                 wrf_file=Nio.open_file(self.filename,'r')
@@ -2024,7 +1987,6 @@ class wrf_file(calc_vars, wrf_plots):
                 if (self.file_type == 'nc'):
                     wrf_file=netCDF4.Dataset(self.filename,'r')
                 elif (self.file_type == 'grb'):
-                    #wrf_file=pygrib.open(self.filename)
                     wrf_file=self.pygrib_wrap(self.filename)
                 else:
                     print('file type not known')
@@ -2039,9 +2001,9 @@ class wrf_file(calc_vars, wrf_plots):
                     print('DX_NMM not found, assuming you are running the ARW core')
                     self.wrf_core='ARW'
                 self.get_atts()
-        except:
-            print('\n \n \n \n SOMETHING WENT WRONG.\n This is likely because your file path is incorrect \n   please try again')
-            self.dataset=None
+        #except:
+        #    print('\n \n \n \n SOMETHING WENT WRONG.\n This is likely because your file path is incorrect \n   please try again')
+        #    self.dataset=None
 
         pass
 
@@ -2056,19 +2018,16 @@ class wrf_file(calc_vars, wrf_plots):
         """this should list the variables available for you to use in get_var
         Note that some of these variables will be derived"""
 
-        #if self.niofile:
         if self.dataset:
-            #print self.wrf_core
             if self.wrf_core=='ARW':
                 pert_vars=perturbation_variables.pert_variable_dict_ARW
                 calc_vars=perturbation_variables.calc_variable_dict_ARW
             elif self.wrf_core=='NMM': 
                 pert_vars=perturbation_variables.pert_variable_dict_NMM
                 calc_vars=perturbation_variables.calc_variable_dict_NMM
-            elif self.wrf_core=='NULL':
+            elif self.wrf_core=='UPP':
                 pert_vars={}
                 calc_vars={}
-
                 pass
             else:
                 print("wrf core type not found, you should be using either ARW or NMM")
@@ -2141,44 +2100,6 @@ class wrf_file(calc_vars, wrf_plots):
                 count+=1
                 print(var_color  , line, end=' ')
 
-
-
-#    def _full_variable(self,var_tuple,fullvar):
-#        'this routine combines base and perterbation variables'
-#        print fullvar, '--->',var_tuple[0],'+', var_tuple[1] ,'\n'
-#
-#        if (type(var_tuple[0]) == type('')):
-#            invar1=self.niofile.variables[var_tuple[0]]
-#            stag1=invar1.stagger
-#            array1=invar1.get_value()
-#        elif (type(var_tuple[0]) == type(1.)):
-#            array1=var_tuple[0] #does not have to be an array, in fact probably isnt
-#            stag1=''
-#        else:
-#            print 'error'
-#
-#
-#
-#        if (type(var_tuple[1]) == type('')):
-#            invar2=self.niofile.variables[var_tuple[1]]
-#            stag2=invar2.stagger        
-#            array2=invar2.get_value()
-#        elif (type(var_tuple[1]) == type(1.)):
-#            array2=var_tuple[1] #does not have to be an array, in fact probably isnt
-#            stag2=''
-#        else:
-#            print 'error'
-#
-#        if (len(stag1) != len(stag2)):
-#            print 'warning, both variables are staggared the same'
-#        else:
-#            stag=stag1
-#
-#        full_array=array1+array2
-#
-#        return full_array, stag
-
-
     def _full_variable(self,var_tuple,fullvar):
         'this routine combines base and perterbation variables'
         print(fullvar, '--->',var_tuple[0],'+', var_tuple[1] ,'\n')
@@ -2213,8 +2134,6 @@ class wrf_file(calc_vars, wrf_plots):
 
 
     def get_var(self,var,level=False,multi=False):
-
-
         """get WRF variables from the file, destagger if necessary
         can use list_var to see which variables your file contains.
         Adding optional level argument, default is false, which means get the variable
@@ -2238,9 +2157,8 @@ class wrf_file(calc_vars, wrf_plots):
         returns a numpy array containing the U wind data
 
         """
-        #import calculate_variables
-        #import perturbation_variables
-
+        if (var in self.variable_dict):
+            return self.variable_dict[var]
 
         if self.wrf_core=='ARW':
             pert_vars=perturbation_variables.pert_variable_dict_ARW
@@ -2248,27 +2166,22 @@ class wrf_file(calc_vars, wrf_plots):
         elif self.wrf_core=='NMM': 
             pert_vars=perturbation_variables.pert_variable_dict_NMM
             calc_vars=perturbation_variables.calc_variable_dict_NMM
-        elif self.wrf_core == 'NULL':
+        elif self.wrf_core == 'UPP':
             pert_vars={}
             calc_vars={}
-
         else:
             print("wrf core type not found, you should be using either ARW or NMM")
             exit()
-
 
         if (var in list(pert_vars.keys())):
             data_array, stag = self._full_variable(pert_vars[var],var)
         elif (var in list(calc_vars.keys())):
             stag='-'
         else:
-
             try:
-                #input_var  =  self.niofile.variables[var]
                 input_var  =  self.dataset.variables[var]
             except KeyError:
                 print('your variable ' + var+ ' does not exist')
-                #raise ValueError('your WRF variable does not exist')
                 input_var=None
                 return input_var
             except ValueError:
@@ -2280,44 +2193,28 @@ class wrf_file(calc_vars, wrf_plots):
                 dimSizes   =  input_var.shape
                 dimNames   =  input_var.dimensions
                 try:
-                   varAttsandVals=input_var.attributes
-                except:
-                    pass
-                try:
                     stag           = input_var.stagger
                 except:
                     stag = '-'
                 if stag == "":
                     stag = '-'
             else:
-                if (self.file_type == 'grb'):
-                    vartype    =  'fake'
-                    numDims    =  input_var['ndims']
-                    dimSizes   =  input_var['shape']
-                    dimNames   =  'fake'
-                    try:
-                       varAttsandVals={}
-                       for att in input_var.ncattrs():
-                           varAttsandVals[att]=input_var.getncattr(att)
-                    except:
-                        pass
-                    try:
-                        stag           = input_var.stagger
-                    except:
-                        stag = '-'
-                    if stag == "":
-                        stag = '-'
-                elif (self.file_type == 'nc'):
+                if (self.file_type == 'nc'):
                     vartype    =  input_var.dtype
                     numDims    =  input_var.ndim
                     dimSizes   =  input_var.shape
                     dimNames   =  input_var.dimensions
                     try:
-                       varAttsandVals={}
-                       for att in input_var.ncattrs():
-                           varAttsandVals[att]=input_var.getncattr(att)
+                        stag           = input_var.stagger
                     except:
-                        pass
+                        stag = '-'
+                    if stag == "":
+                        stag = '-'
+                elif (self.file_type == 'grb'):
+                    vartype    =  'fake'
+                    numDims    =  input_var['ndims']
+                    dimSizes   =  input_var['shape']
+                    dimNames   =  'fake'
                     try:
                         stag           = input_var.stagger
                     except:
@@ -2325,11 +2222,13 @@ class wrf_file(calc_vars, wrf_plots):
                     if stag == "":
                         stag = '-'
 
+
             if self.wrf_core == 'NMM':
         #        print 'ASSUMING ALL NMM HORIZONTAL VARIABLES ARE NOTSTAGGERED, NOT SURE IF THIS IS CORRECT'
                 if stag !='Z':
                     stag="-"
-
+                    #undoing the not staggared assumption
+                    stag="H"
             #try:
             if (var != 'Times'):
                     #cpu_check=int(self.filename[-7:-3])
@@ -2343,6 +2242,8 @@ class wrf_file(calc_vars, wrf_plots):
                                 data_array=    wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
                             elif self.wrf_core == 'NMM':
                                 data_array=    wrf_user_unstagger.wrf_user_unstagger_NMM(data_array,stag)
+                            elif self.wrf_core == 'UPP':
+                                print('UPP file, should already be destaggared?')
                             else:
                                 print('Error: WRF core not known, should be either ARW or NMM')
 
@@ -2355,23 +2256,27 @@ class wrf_file(calc_vars, wrf_plots):
             if use_NIO:
                 data_array=input_var.get_value()
             else:
-                if self.file_type == 'grb':
+                if self.file_type == 'nc':
+                    data_array=input_var[:]
+                elif self.file_type == 'grb':
                     if not level:
-                        data_array=input_var['data']
+                        data_array=np.ma.masked_equal(input_var['data'],9999.)
                     else:
                         data_array=input_var['levels']
-                elif self.file_type == 'nc':
-                    data_array=input_var[:]
         if (multi == True):
             return data_array
 
-
         if (stag != '-'):
             print('Your variable', var, ' is now being de-staggered\n')
-            if self.wrf_core == 'ARW':
-                data_array=    wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
-            elif self.wrf_core == 'NMM':
+            if (self.wrf_core == 'ARW'):
+                data_array=wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
+            elif(self.wrf_core == 'NMM') and (var != 'Times'):
+                print('before',np.shape(data_array))
                 data_array=    wrf_user_unstagger.wrf_user_unstagger_NMM(data_array,stag)
+                print('after',np.shape(data_array))
+                print('')
+            elif self.wrf_core == 'UPP':
+                print('UPP file, should already be destaggared?')
             else:
                 print('Error: WRF core not known, should be either ARW or NMM')
 
@@ -2395,7 +2300,6 @@ class wrf_file(calc_vars, wrf_plots):
             if (var == 'TD'):
                 data_array= self.compute_td(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
             if (var == 'PRES'):
-
                 data_array= data_array/100.
             if (var == 'Z'):
                 if self.wrf_core == 'ARW':
@@ -2434,7 +2338,7 @@ class wrf_file(calc_vars, wrf_plots):
             del(data_array)
             data_array=time_list
 
-        if (multi == False):
+        if (multi == False) and not level:
             self.variable_dict.update({var:data_array})
 
         return data_array
@@ -2603,16 +2507,17 @@ class wrf_file(calc_vars, wrf_plots):
         if use_NIO:
             atts=self.dataset.attributes
         else:
-            atts={}
-            for var in self.dataset.ncattrs():
-                #Nio has variables in an array, so I will put them in a list so the index wworks the saae when using netCDF4, annoying
-                the_att=self.dataset.getncattr(var)
-                if type(the_att) == str:
-                    atts[var]=the_att
-                else:
-                    atts[var]=[the_att]
-        self.atts=atts
-
+            if (self.file_type == 'nc'):
+                atts=self.atts
+                for var in self.dataset.ncattrs():
+                    #Nio has variables in an array, so I will put them in a list so the index wworks the saae when using netCDF4, annoying
+                    the_att=self.dataset.getncattr(var)
+                    if type(the_att) == str:
+                        atts[var]=the_att
+                    else:
+                        atts[var]=[the_att]
+            elif (self.file_type == 'grb'):
+                pass
 
     def get_tiles(self):
         """get info needed to combine tiled data
