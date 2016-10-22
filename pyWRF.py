@@ -392,51 +392,20 @@ class calc_vars():
             min_position=np.where(distance_diff==np.min(distance_diff))
 
         if(len(np.shape(lat_array)) == 3):
-            assert len(lat_array[min_position]) == 1
+
+            if (len(lat_array[min_position]) != 1):
+                print('warning not a unique answer, there are ',len(lat_array[min_position]), ' closest points, chosing the first one')
             print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
             print('                                  result was (' ,lat_array[min_position][0],',',long_array[min_position][0],')')
             print('')
             return min_position[1][0],min_position[2][0]
         elif(len(np.shape(lat_array)) == 2):
-            assert len(lat_array[min_position]) == 1
+            if (len(lat_array[min_position]) != 1):
+                print('warning not a unique answer, there are ',len(lat_array[min_position]), ' closest points, chosing the first one')
             print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
             print('                                  result was (' ,lat_array[min_position][0],',',long_array[min_position][0],')')
             print('')
             return min_position[0][0],min_position[1][0]
-#        try:
-#            lat_min_array=np.where((lat_diff==np.min(lat_diff)) & (lat_diff.mask == False))
-#            lon_min_array=np.where((lon_diff==np.min(lon_diff)) & (lat_diff.mask == False))
-#        except:
-#            if verbose:
-#                print('get_i_j warning, not a masked array')
-#            lat_min_array=np.where(lat_diff==np.min(lat_diff))
-#            lon_min_array=np.where(lon_diff==np.min(lon_diff))
-
-        #dimension are Time,NS,WE
-        #so lat is     0   ,1, 0
-        #so lon is     0,   0  1
-        #will reference from -ve so we don't have to worry about whether we have a time dimension
-#        lat_min=np.unique(lat_min_array[-2])
-#        lon_min=np.unique(lon_min_array[-1])
-#        if (len(lat_min) > 1) and verbose:
-#            print('warning not unique minimum for latitude')
-#            print(lat_min)
-#        if (len(lon_min) > 1) and verbose:
-#            print('warning not unique minimum for longitude')
-#            print(lon_min)
-#
-#        if(len(np.shape(lat_array)) == 3):
-#            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-#            print('                                  result was (' ,lat_array[0,lat_min[0],lon_min[0]],',',long_array[0,lat_min[0],lon_min[0]],')')
-#            print('')
-#        elif(len(np.shape(lat_array)) == 2):
-#            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-#            print('                                  result was (' ,lat_array[lat_min[0],lon_min[0]],',',long_array[lat_min[0],lon_min[0]],')')
-#            print('')
-#        import ipdb;ipdb.set_trace()
-#
-#        return lat_min[0],lon_min[0]
-
 
 
     def interp_to_height(self,height_levels, height_on_model_levels,input_variable):
@@ -455,7 +424,7 @@ class calc_vars():
         ------
         Assuming the following dimensions  
         4 dimensions = (time, bottom_top,sound_north, west_east)
-
+        added left=np.nan and right=np.nan to set value to nan outside interp range
         """
 
         if (len(np.shape(input_variable)) == 4):
@@ -468,13 +437,13 @@ class calc_vars():
             for the_time in range(ti_dim):
                 for i in range(sn_dim):
                     for j in range(we_dim):
-                        output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j])
+                        output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j],left=np.nan,right=np.nan)
 
 
         if (len(np.shape(input_variable)) == 1):
             hi_dim=np.shape(input_variable)[0]
             output_variable=np.zeros((len(height_levels)),dtype=np.float32)
-            output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:])
+            output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:],left=np.nan,right=np.nan)
         return output_variable
 
 
@@ -496,6 +465,7 @@ class calc_vars():
         ------
         Assuming the following dimensions  
         4 dimensions = (time, bottom_top,sound_north, west_east)
+        added left=np.nan and right=np.nan to set value to nan outside interp range
 
         """
 
@@ -517,12 +487,12 @@ class calc_vars():
             for the_time in range(ti_dim):
                 for i in range(sn_dim):
                     for j in range(we_dim):
-                        output_variable[the_time,:,i,j] = s.interp(pres_levels[:],pres_on_model_levels_rev[the_time,:,i,j],input_variable_rev[the_time,:,i,j])
+                        output_variable[the_time,:,i,j] = s.interp(pres_levels[:],pres_on_model_levels_rev[the_time,:,i,j],input_variable_rev[the_time,:,i,j],left=np.nan,right=np.nan)
 
         if (len(np.shape(input_variable)) == 1):
             hi_dim=np.shape(input_variable)[0]
             output_variable=np.zeros((len(pres_levels)),dtype=np.float32)
-            output_variable[:] = s.interp(pres_levels[:],pres_on_model_levels[:],input_variable[:])
+            output_variable[:] = s.interp(pres_levels[:],pres_on_model_levels[:],input_variable[:],left=np.nan,right=np.nan)
 
         return output_variable
 
@@ -1116,8 +1086,6 @@ class wrf_plots():
         Optional Inputs:
              lat : This is useful if you want specify a smaller domain (i.e. not plot the whole wrf domain)
              lon : This is useful if you want specify a smaller domain (i.e. not plot the whole wrf domain)
-
-
 
          Returns:
           -------
@@ -1927,16 +1895,21 @@ class wrf_file(calc_vars, wrf_plots):
         sys.path.append('wrf_plots/')
 
         if cen_file:
-            with open(cen_file,'r') as fid:
-                for line in fid:
-                    if line.count('clat=') == 1:
-                        clat=line.split('=')[1]
-                    if line.count('clon=') == 1:
-                        clon=line.split('=')[1]
-            self.atts['CEN_LAT']=[clat]
-            self.atts['CEN_LON']=[clon]
-            self.atts['MAP_PROJ']=[203]
-            self.wrf_core='UPP'
+            if os.path.isfile(cen_file):
+                print('found your center file, assuming grb file came from NMM core')
+                with open(cen_file,'r') as fid:
+                    for line in fid:
+                        if line.count('clat=') == 1:
+                            clat=line.split('=')[1]
+                        if line.count('clon=') == 1:
+                            clon=line.split('=')[1]
+                self.atts['CEN_LAT']=[clat]
+                self.atts['CEN_LON']=[clon]
+                self.atts['MAP_PROJ']=[203]
+                self.wrf_core='UPP'
+            else:
+                print('did NOT find your center file, assuming grb file came from ARW core')
+                pass
 
         if (filename.count('wrfout')==1) & (filename[-3:] != '.nc'):
             if use_NIO:
@@ -2157,7 +2130,7 @@ class wrf_file(calc_vars, wrf_plots):
         returns a numpy array containing the U wind data
 
         """
-        if (var in self.variable_dict):
+        if (var in self.variable_dict) and not level:
             return self.variable_dict[var]
 
         if self.wrf_core=='ARW':
