@@ -1878,6 +1878,7 @@ class wrf_file(calc_vars, wrf_plots):
                 variables[key_name]={'data':full_array,'levels':levels,'ndims':n_levels,'shape':np.shape(full_array)}
             self.variables=variables
 
+
         def load_param_table(self,tablename):
             with open(tablename,'r') as fid:
                 param_dict={}
@@ -1888,12 +1889,13 @@ class wrf_file(calc_vars, wrf_plots):
 
     def __init__(self,filename=None,cen_file=None):
         self.filename=filename
+        self.cen_file=cen_file
         self.variable_dict={}
         self.atts={}
         self.plot_directory='.'
         import sys as sys
         sys.path.append('wrf_plots/')
-
+        self.wrf_core=False
         if cen_file:
             if os.path.isfile(cen_file):
                 print('found your center file, assuming grb file came from NMM core')
@@ -1906,7 +1908,7 @@ class wrf_file(calc_vars, wrf_plots):
                 self.atts['CEN_LAT']=[clat]
                 self.atts['CEN_LON']=[clon]
                 self.atts['MAP_PROJ']=[203]
-                self.wrf_core='UPP'
+                self.wrf_core='UPP_NMM'
             else:
                 print('did NOT find your center file, assuming grb file came from ARW core')
                 pass
@@ -1923,27 +1925,30 @@ class wrf_file(calc_vars, wrf_plots):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="UPP"        #should be indepeneant of NMM or WRF as it has been processed
+            if not self.wrf_core:
+                self.wrf_core="UPP_ARW"
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('wrfprs')==1) & (filename[-4:] != '.grb'):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="UPP"  #should be indepeneant of NMM or WRF as it has been processed
+            if not self.wrf_core:
+                self.wrf_core="UPP_ARW"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('wrfwnd')==1) & (filename[-4:] != '.grb'):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="UPP"  #should be indepeneant of NMM or WRF as it has been processed
+            if not self.wrf_core:
+                self.wrf_core="UPP_WND"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
         if (filename.count('WRFWND')==1) & (filename[-4:] != '.grb'):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
             self.file_type='grb'
-            self.wrf_core="UPP"  #should be indepeneant of NMM or WRF as it has been processed
+            if not self.wrf_core:
+               self.wrf_core="UPP_WND"  #should be indepeneant of NMM or WRF as it has been processed
             print('Found UPP processed grib file, assuming all data has been processed')
-
         if (self.filename.find('wrfout') == 0) | (self.filename.find('wrfprs') == 0) | (self.filename.find('WRFPRS') == 0) | (self.filename.find('dbz_d') == 0):
             self.wrf_directory = './'
         else:
@@ -1992,19 +1997,14 @@ class wrf_file(calc_vars, wrf_plots):
         Note that some of these variables will be derived"""
 
         if self.dataset:
-            if self.wrf_core=='ARW':
-                pert_vars=perturbation_variables.pert_variable_dict_ARW
-                calc_vars=perturbation_variables.calc_variable_dict_ARW
-            elif self.wrf_core=='NMM': 
-                pert_vars=perturbation_variables.pert_variable_dict_NMM
-                calc_vars=perturbation_variables.calc_variable_dict_NMM
-            elif self.wrf_core=='UPP':
-                pert_vars={}
-                calc_vars={}
-                pass
-            else:
+            if not self.wrf_core:
                 print("wrf core type not found, you should be using either ARW or NMM")
                 exit()
+            else:
+                print('wrf core is '+self.wrf_core)
+                pert_vars={}
+                calc_vars={}
+
 
 
             print("you can extract the following variables\n")
@@ -2133,18 +2133,21 @@ class wrf_file(calc_vars, wrf_plots):
         if (var in self.variable_dict) and not level:
             return self.variable_dict[var]
 
-        if self.wrf_core=='ARW':
-            pert_vars=perturbation_variables.pert_variable_dict_ARW
-            calc_vars=perturbation_variables.calc_variable_dict_ARW
-        elif self.wrf_core=='NMM': 
-            pert_vars=perturbation_variables.pert_variable_dict_NMM
-            calc_vars=perturbation_variables.calc_variable_dict_NMM
-        elif self.wrf_core == 'UPP':
-            pert_vars={}
-            calc_vars={}
-        else:
+
+        if not self.wrf_core:
             print("wrf core type not found, you should be using either ARW or NMM")
             exit()
+        elif (self.wrf_core == 'ARW'):
+            pert_vars=perturbation_variables.pert_variable_dict_ARW
+            calc_vars=perturbation_variables.calc_variable_dict_ARW
+        elif (self.wrf_core == 'NMM'):
+            pert_vars=perturbation_variables.pert_variable_dict_NMM
+            calc_vars=perturbation_variables.calc_variable_dict_NMM
+        else:
+            #print('wrf core is '+self.wrf_core)
+            pert_vars={}
+            calc_vars={}
+
 
         if (var in list(pert_vars.keys())):
             data_array, stag = self._full_variable(pert_vars[var],var)
@@ -2310,6 +2313,21 @@ class wrf_file(calc_vars, wrf_plots):
             time_list.append(''.join(new_data_array))
             del(data_array)
             data_array=time_list
+
+        #BELOW IS FIX FOR NMM COPYGB OUTPUT##
+        if (self.wrf_core == 'UPP_NMM'):
+            chop_value=1
+            do_chop=True
+            temp_array=self.dataset.variables['NLAT_SFC']['data']
+#
+            if len(np.shape(data_array)) == 3:
+                while do_chop:
+                    if np.max(temp_array[-1,chop_value:-chop_value,chop_value:-chop_value]) == 9999.:
+                        chop_value+=1
+                    else:
+                        do_chop=False
+                new_data=data_array[:,chop_value:-chop_value,chop_value:-chop_value]
+                data_array=new_data
 
         if (multi == False) and not level:
             self.variable_dict.update({var:data_array})
@@ -2529,4 +2547,4 @@ class wrf_file(calc_vars, wrf_plots):
 
         self.tile=tile
 
-
+       
