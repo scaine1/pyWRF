@@ -2315,20 +2315,39 @@ class wrf_file(calc_vars, wrf_plots):
             data_array=time_list
 
         #BELOW IS FIX FOR NMM COPYGB OUTPUT##
+        #it is very hacky, one day i should fix this up, but time is precious and it kinda works
         if (self.wrf_core == 'UPP_NMM'):
             chop_value=1
             do_chop=True
             temp_array=self.dataset.variables['NLAT_SFC']['data']
-#
+            temp_mask=np.ma.masked_equal(temp_array,9999.0)
             if len(np.shape(data_array)) == 3:
+                #first get rid of any row or column which is all invalid
+                _ns_dim=np.shape(temp_mask)[1]
+                _we_dim=np.shape(temp_mask)[2]
+                ns_invalid=np.zeros((_ns_dim))
+                we_invalid=np.zeros((_we_dim))
+                for ns_dim in range(_ns_dim):
+                    ns_invalid[ns_dim]=temp_mask.mask[0,ns_dim,:].all()
+                for we_dim in range(_we_dim):
+                    we_invalid[we_dim]=temp_mask.mask[0,:,we_dim].all()
+                ns_min=np.argmin(ns_invalid)
+                ns_max=np.argmax(ns_invalid)
+                we_min=np.argmin(we_invalid)
+                we_max=np.argmax(we_invalid)
+                if ns_max == 0:
+                    ns_max=ns_dim
+                if we_max==0:
+                    we_max=we_dim
+                temp_array2=temp_array[:,ns_min:ns_max,we_min:we_max]
+                data_array=data_array[:,ns_min:ns_max,we_min:we_max]
                 while do_chop:
-                    if np.max(temp_array[-1,chop_value:-chop_value,chop_value:-chop_value]) == 9999.:
+                    if np.max(temp_array2[:,chop_value:-chop_value,chop_value:-chop_value]) == 9999.:
                         chop_value+=1
                     else:
                         do_chop=False
                 new_data=data_array[:,chop_value:-chop_value,chop_value:-chop_value]
                 data_array=new_data
-
         if (multi == False) and not level:
             self.variable_dict.update({var:data_array})
 
