@@ -589,8 +589,8 @@ class calc_vars():
         for ti in range(ntimes):
             for k in range(mkzh):
                 dbz_lin[ti,k,:,:]=np.transpose(dbz[ti,:,:,k])
- 
-        self.variable_dict.update({'dbz_lin':dbz_lin})
+        if self.save_data:
+            self.variable_dict.update({'dbz_lin':dbz_lin})
 
         return dbz_lin
 
@@ -714,7 +714,8 @@ class calc_vars():
             for k in range(mkzh):
                 dbz_thomp[ti,k,:,:]=np.transpose(dbz_test[:,:,k])
 
-        self.variable_dict.update({'dbz_thomp':dbz_thomp})
+        if self.save_data:
+            self.variable_dict.update({'dbz_thomp':dbz_thomp})
 
         return dbz_thomp
 
@@ -839,8 +840,8 @@ class calc_vars():
                  #Tdbz[ti,k,:,:], Rdbz[ti,k,:,:], Idbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],T1D[ti,k,:,:],Q1D[ti,k,:,:],C1D[ti,k,:,:],FI1D[ti,k,:,:],FR1D[ti,k,:,:],FS1D[ti,k,:,:],CUREFL,QW1[ti,k,:,:],QI1[ti,k,:,:],QR1[ti,k,:,:],QS1,DBZ1,DBZR1,DBZI1,DBZC1,NLICE1,miy,mjx,MASSR,MASSI)
 
                  Tdbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],T1D[ti,k,:,:],Q1D[ti,k,:,:],C1D[ti,k,:,:],FI1D[ti,k,:,:],FR1D[ti,k,:,:],FS1D[ti,k,:,:],CUREFL,QW1[ti,k,:,:],QI1[ti,k,:,:],QR1[ti,k,:,:],QS1,DBZ1,DBZR1,DBZI1,DBZC1,NLICE1,miy,mjx,MASSR,MASSI,im,jm)
-
-        self.variable_dict.update({'dbz_ferrier':Tdbz})
+        if self.save_data:
+            self.variable_dict.update({'dbz_ferrier':Tdbz})
 
         return Tdbz #, Rdbz, Idbz
 
@@ -879,11 +880,12 @@ class calc_vars():
         except:
             ter=self.get_var('FIS')/9.81
 
-        try:
+        #try:
+        if 1==1:
             vtmk=self.compute_vtmk()
-        except:
-            print('could not calculate virtual temperature')
-            return  None
+        #except:
+        #    print('could not calculate virtual temperature')
+        #    return  None
 
         #using the hypsometer equation which is
         # Z_2 - Z_1 = (R*T_v/g)*log(p_1/p_2)
@@ -926,7 +928,8 @@ class calc_vars():
         #        ght_destag[ti,k,:,:] = 0.5*( ght[ti,k,:,:] + ght[ti,k+1,:,:] )
         #self.variable_dict.update({'GHT':ght_destag})
         #return ght_destag 
-        self.variable_dict.update({'GHT':ght})
+        if self.save_data:
+            self.variable_dict.update({'GHT':ght})
         return ght
 
     def compute_extrema(self,mat,mode='wrap',window=10):
@@ -1268,8 +1271,24 @@ class wrf_plots():
             self.get_var(lon_var)
             lon_min=np.min(self.variable_dict[lon_var])
 
-        lat_max=np.max(self.variable_dict[lat_var])
-        lon_max=np.max(self.variable_dict[lon_var])
+
+        try:
+            lon_min=np.min(self.variable_dict[lon_var])
+        except:
+            self.get_var(lon_var)
+            lon_min=np.min(self.variable_dict[lon_var])
+
+        try:
+            lat_max=np.max(self.variable_dict[lat_var])
+        except:
+            self.get_var(lat_var)
+            lat_max=np.max(self.variable_dict[lat_var])
+
+        try:
+            lon_max=np.max(self.variable_dict[lon_var])
+        except:
+            self.get_var(lon_var)
+            lon_max=np.max(self.variable_dict[lon_var])
 
         lat_range= lat_max-lat_min
         lon_range= lon_max-lon_min
@@ -1891,6 +1910,7 @@ class wrf_file(calc_vars, wrf_plots):
         self.filename=filename
         self.cen_file=cen_file
         self.variable_dict={}
+        self.save_data=True
         self.atts={}
         self.plot_directory='.'
         import sys as sys
@@ -2267,14 +2287,33 @@ class wrf_file(calc_vars, wrf_plots):
                     data_array = self.variable_dict[dependant_variable]
 
             if (var == 'TEMP') & (self.wrf_core == 'ARW'):
-                data_array= self.compute_tk(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
+                try:
+                    data_array= self.compute_tk(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
+                except:
+                    var1=self.get_var(calc_vars[var][0])
+                    var2=self.get_var(calc_vars[var][1])
+                    data_array= self.compute_tk(var1,var2)
             elif(var == 'TEMP') & (self.wrf_core == 'NMM'):
-                data_array=self.variable_dict['T']
+                try:
+                    data_array=self.variable_dict['T']
+                except:
+                    data_array=self.get_var('T')
 
             if (var == 'RH'):
-                data_array= self.compute_rh(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]],self.variable_dict[calc_vars[var][2]])
+                try:
+                    data_array= self.compute_rh(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]],self.variable_dict[calc_vars[var][2]])
+                except:
+                    var1=self.get_var(calc_vars[var][0])
+                    var2=self.get_var(calc_vars[var][1])
+                    var3=self.get_var(calc_vars[var][2])
+                    data_array= self.compute_rh(var1,var2,var3)
             if (var == 'TD'):
-                data_array= self.compute_td(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
+                try:
+                    data_array= self.compute_td(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
+                except:
+                    var1=self.get_var(calc_vars[var][0])
+                    var2=self.get_var(calc_vars[var][1])
+                    data_array= self.compute_td(var1,var2)
             if (var == 'PRES'):
                 data_array= data_array/100.
             if (var == 'Z'):
@@ -2287,7 +2326,11 @@ class wrf_file(calc_vars, wrf_plots):
                     print('cant find your wrf core (should be ARW or NMM)')
 
             if (var == 'SPH'):
-                data_array= self.compute_sph(self.variable_dict[calc_vars[var][0]])
+                try:
+                    data_array= self.compute_sph(self.variable_dict[calc_vars[var][0]])
+                except:
+                    var1=self.get_var(calc_vars[var][0])
+                    data_array= self.compute_sph(var1)
 
             if (var == 'VTMK'):
                 data_array= self.compute_vtmk()
@@ -2348,7 +2391,7 @@ class wrf_file(calc_vars, wrf_plots):
                         do_chop=False
                 new_data=data_array[:,chop_value:-chop_value,chop_value:-chop_value]
                 data_array=new_data
-        if (multi == False) and not level:
+        if (multi == False) and (not level) and (self.save_data):
             self.variable_dict.update({var:data_array})
 
         return data_array
@@ -2473,9 +2516,8 @@ class wrf_file(calc_vars, wrf_plots):
                     total_array[:,SN_START:SN_END+1,WE_START:WE_END+1] = wrf_file_m.get_var(var_desired,multi=True)
                 wrf_file_m.close()
 
-
-        self.variable_dict.update({var_desired:total_array})
-
+        if self.save_data:
+            self.variable_dict.update({var_desired:total_array})
 
         return total_array, stag
 
