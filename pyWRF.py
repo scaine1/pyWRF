@@ -437,13 +437,15 @@ class calc_vars():
             for the_time in range(ti_dim):
                 for i in range(sn_dim):
                     for j in range(we_dim):
-                        output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j],left=np.nan,right=np.nan)
+                        #output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j],left=np.nan,right=np.nan)
+                        output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j])
 
 
         if (len(np.shape(input_variable)) == 1):
             hi_dim=np.shape(input_variable)[0]
             output_variable=np.zeros((len(height_levels)),dtype=np.float32)
-            output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:],left=np.nan,right=np.nan)
+            #output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:],left=np.nan,right=np.nan)
+            output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:])
         return output_variable
 
 
@@ -1081,7 +1083,7 @@ class wrf_plots():
         self.bmap()
         pass
 
-    def bmap(self,lat=None,lon=None,proj='lcc'):
+    def bmap(self,lat=None,lon=None,proj='cyl'):
         """create map projection and transform lat and long values to x and y
         Inputs:
          -------
@@ -2226,28 +2228,28 @@ class wrf_file(calc_vars, wrf_plots):
                     #undoing the not staggared assumption
                     stag="H"
             #try:
-            if (var != 'Times'):
-                    #cpu_check=int(self.filename[-7:-3])
-                    #print 'cpu_check', cpu_check
-                    if (self.filename[-8] == '_') & (multi == False):
-                        print('I think you are using multiple files, i.e. 1 per cpu, going to automatically combine for you')
-                        data_array , stag= self.get_var_multi_cpu(self.wrf_directory,self.filename,var,stag=stag)
-                        if (stag != '-'):
-                            print('Your variable', var, ' is now being de-staggered\n')
-                            if self.wrf_core == 'ARW':
-                                data_array=    wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
-                            elif self.wrf_core == 'NMM':
-                                data_array=    wrf_user_unstagger.wrf_user_unstagger_NMM(data_array,stag)
-                            elif self.wrf_core == 'UPP':
-                                print('UPP file, should already be destaggared?')
-                            else:
-                                print('Error: WRF core not known, should be either ARW or NMM')
-
-                        return data_array
-                    elif(self.filename[-8] == '_') & (multi == True):
-                        pass
-                    else:
-                        pass
+#            if (var != 'Times'):
+#                    #Simon hacking below to get times greater than 100 hours working, but not able to test mupltile cpu output so i might break it..
+#                    # Actually, im turning it off 
+#                    if (self.filename[-8] == '_') & (multi == False):
+#                        print('I think you are using multiple files, i.e. 1 per cpu, going to automatically combine for you')
+#                        data_array , stag= self.get_var_multi_cpu(self.wrf_directory,self.filename,var,stag=stag)
+#                        if (stag != '-'):
+#                            print('Your variable', var, ' is now being de-staggered\n')
+#                            if self.wrf_core == 'ARW':
+#                                data_array=    wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
+#                            elif self.wrf_core == 'NMM':
+#                                data_array=    wrf_user_unstagger.wrf_user_unstagger_NMM(data_array,stag)
+#                            elif self.wrf_core == 'UPP':
+#                                print('UPP file, should already be destaggared?')
+#                            else:
+#                                print('Error: WRF core not known, should be either ARW or NMM')
+#
+#                        return data_array
+#                    elif(self.filename[-8] == '_') & (multi == True):
+#                        pass
+#                    else:
+#                        pass
 
             if use_NIO:
                 data_array=input_var.get_value()
