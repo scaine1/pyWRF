@@ -317,6 +317,15 @@ def wrf_user_unstagger_NMM(varin,unstagDim,test_method=2):
                                         nan_count=np.sum(np.isnan(test),0)
                                         valid_count=np.shape(test)[0]-nan_count
                                         var_out[0,:,ii,jj]=nan_sum/valid_count
+
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        test = None
+        grid_mask = None
+        grid = None
+        varin = None
+
         # below fixes the "edge" problem caused by destaggering
         if (n_dims == 2):
             return var_out[1:-1, 1:-1]

@@ -46,7 +46,7 @@ class calc_vars():
     def __init__(self):
         pass
 
-    def compute_lat_lon_nmm(self,var):
+    def compute_lat_lon_nmm(self, var):
         """convert lat or lon in degrees (from radians)
         Inputs:
         -------
@@ -60,14 +60,14 @@ class calc_vars():
 
         if self.wrf_core == 'NMM':
             print('converting your input array from radians to degrees')
-            outvar=var*57.2957795
+            outvar = var * 57.2957795
         else:
             print('you are not using the nmm core and should not need this, returning input variable')
-            outvar=var
+            outvar = var
 
         return outvar
 
-    def compute_tk(self,pressure=None,theta=None):
+    def compute_tk(self, pressure=None, theta=None):
         """Compute temperature in kelvin
         Inputs:
         -------
@@ -79,30 +79,38 @@ class calc_vars():
         -------
         Temperature in Kelvin
         """
-        if (pressure is None):            
+        if (pressure is None):
             try:
-               pressure=self.variable_dict['PRES']
+               pressure = self.variable_dict['PRES']
             except:
-               pressure=self.get_var('PRES')
+               pressure = self.get_var('PRES')
 
-        if (theta is None):            
+        if (theta is None):
             try:
-               theta=self.variable_dict['THETA']
+               theta = self.variable_dict['THETA']
             except:
-               theta=self.get_var('THETA')
+               theta = self.get_var('THETA')
 
-        pressure=pressure*100.
+        pressure = pressure * 100.
         print('calculating temperature in kelvin\n')
 
-        p1000mb=100000.
-        r_d=287. 
-        cp = (7/2.)*r_d
+        p1000mb = 100000.
+        r_d = 287.
+        cp = (7 / 2.) * r_d
 
-        pi=(pressure/p1000mb)**(r_d/cp)
-        tk=pi*theta
+        pi = (pressure / p1000mb)**(r_d / cp)
+        tk = pi * theta
+
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        pressure = None
+        pi = None
+        theta = None
+
         return tk
 
-    def compute_rh(self,qvapor=None,pressure=None,temperature=None):
+    def compute_rh(self, qvapor=None, pressure=None, temperature=None):
         """Compute the relative humidity
         Inputs:
         ------
@@ -120,45 +128,58 @@ class calc_vars():
 
         if (qvapor is None):
             try:
-               qvapor=self.variable_dict['QVAPOR']
+               qvapor = self.variable_dict['QVAPOR']
             except:
-               qvapor=self.get_var('QVAPOR')
+               qvapor = self.get_var('QVAPOR')
 
-        if (pressure is None):            
+        if (pressure is None):
             try:
-               pressure=self.variable_dict['PRES']
+               pressure = self.variable_dict['PRES']
             except:
-               pressure=self.get_var('PRES')
+               pressure = self.get_var('PRES')
 
-        if (temperature is None):            
+        if (temperature is None):
             try:
-               temperature=self.variable_dict['TEMP']
+               temperature = self.variable_dict['TEMP']
             except:
-               temperature=self.get_var('TEMP')
+               temperature = self.get_var('TEMP')
 
 
-        pressure=pressure*100.
+        pressure = pressure * 100.
         print('calculating relative humidity\n')
-        svp1=0.6112
-        svp2=17.67
-        svp3=29.65
-        svpt0=273.15
+        svp1 = 0.6112
+        svp2 = 17.67
+        svp3 = 29.65
+        svpt0 = 273.15
 
-        r_d=287.
-        r_v=461.6
-        ep_2=r_d/r_v
-        ep_3=0.622
+        r_d = 287.
+        r_v = 461.6
+        ep_2 = r_d / r_v
+        ep_3 = 0.622
 
-        es=10.*svp1*np.exp(svp2*(temperature-svpt0)/(temperature-svp3))
-        qvs=ep_3*es/(0.01 * pressure- (1-ep_3)*es)
+        es = 10. * svp1 * np.exp(svp2*(temperature-svpt0)/(temperature-svp3))
+        qvs = ep_3 * es / (0.01 * pressure - (1 - ep_3) * es)
 
-        qvap_on_qvs=qvapor/qvs
+        qvap_on_qvs = qvapor / qvs
 
-        inner_part=np.where(qvap_on_qvs >= 1.0, 1.0,qvap_on_qvs)
-        rh=100*np.where(inner_part <=0,0,inner_part)
+        inner_part = np.where(qvap_on_qvs >= 1.0, 1.0, qvap_on_qvs)
+        rh = 100 * np.where(inner_part <= 0, 0, inner_part)
+
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+
+        pressure = None
+        qvapor = None
+        temperature = None
+        es = None
+        qvs = None
+        qvap_on_qvs = None
+        intter_part = None
+
         return rh
 
-    def compute_vtmk(self,qvapor=None,tmk=None):
+    def compute_vtmk(self, qvapor=None, tmk=None):
         """calculate the virtual temperature
         Inputs:
         -------
@@ -194,26 +215,34 @@ class calc_vars():
         """
         if (qvapor is None):
             try:
-               qvapor=self.variable_dict['QVAPOR']
+               qvapor = self.variable_dict['QVAPOR']
             except:
-               qvapor=self.get_var('QVAPOR')
+               qvapor = self.get_var('QVAPOR')
 
-        if (tmk is None):            
+        if (tmk is None):
             try:
-               tmk=self.variable_dict['TEMP']
+               tmk = self.variable_dict['TEMP']
             except:
-               tmk=self.get_var('TEMP')
+               tmk = self.get_var('TEMP')
 
         print('calculating virtual temperature in kelvin\n')
 
-        qvapor_temp=qvapor*0.001
-        eps=0.622
+        qvapor_temp = qvapor * 0.001
+        eps = 0.622
 
-        vtmk=tmk * (eps+qvapor_temp)/(eps*(1.+qvapor_temp))
+        vtmk = tmk * (eps + qvapor_temp) / (eps * (1. + qvapor_temp))
+
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        qvapor = None
+        tmk = None
+        qvapor_temp = None
+
         return vtmk
 
 
-    def compute_td(self,qvapor=None,pressure=None):
+    def compute_td(self, qvapor=None, pressure=None):
         """calculate the dew point temperature
         Inputs:
         -------
@@ -232,23 +261,30 @@ class calc_vars():
         """
         if (qvapor is None):
             try:
-               qvapor=self.variable_dict['QVAPOR']
+               qvapor = self.variable_dict['QVAPOR']
             except:
-               qvapor=self.get_var('QVAPOR')
+               qvapor = self.get_var('QVAPOR')
 
-        if (pressure is None):            
+        if (pressure is None):
             try:
-               pressure=self.variable_dict['PRES']
+               pressure = self.variable_dict['PRES']
             except:
-               pressure=self.get_var('PRES')
+               pressure = self.get_var('PRES')
 
         print('calculating dew point temperature in kelvin\n')
-        pressure=pressure/100.                                #I think pressure needs to be in mb
-        qv= np.where(qvapor <0.,0.,qvapor)
-        vapor_pres  = (qv*pressure)/(0.622+qv)        
-        vapor_pres  = np.where(vapor_pres < 0.001, 0.001,vapor_pres)        #avoid problems near zero
-        td= (243.5*np.log(vapor_pres)-440.8)/(19.48-np.log(vapor_pres))
+        pressure = pressure / 100. #I think pressure needs to be in mb
+        qv = np.where(qvapor < 0.,0., qvapor)
+        vapor_pres = (qv * pressure) / (0.622 + qv)
+        vapor_pres = np.where(vapor_pres < 0.001, 0.001, vapor_pres) #avoid problems near zero
+        td = (243.5 * np.log(vapor_pres) - 440.8) / (19.48 - np.log(vapor_pres))
 
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        qvapor = None
+        pressure = None
+        qv = None
+        vapor_pres = None
         return td
 
 
@@ -273,38 +309,38 @@ class calc_vars():
         """
 
         if (self.wrf_core == 'ARW') or (self.wrf_core == 'NMM'):
-            #try:
-            #    psfc=self.variable_dict['PSFC']/100.
-            #except:
-            #    psfc=self.get_var('PSFC')/100.
             try:
-                pres=self.variable_dict['PRES']
+                pres = self.variable_dict['PRES']
             except:
-                pres=self.get_var('PRES')
-
+                pres = self.get_var('PRES')
 
             try:
-                Z=self.variable_dict['Z']
+                Z = self.variable_dict['Z']
             except:
-                Z=self.get_var('Z')
+                Z = self.get_var('Z')
 
             try:
-                T=self.variable_dict['TEMP']
+                T = self.variable_dict['TEMP']
             except:
-                T=self.get_var('TEMP')
+                T = self.get_var('TEMP')
 
-        rgas=287.04
-        grav=9.81
+        rgas = 287.04
+        grav = 9.81
 
-        exponent=(grav*Z[0,0,:,:])/(rgas*T[0,0,:,:])
-        #mslp = psfc[0,:,:]*np.exp(exponent)
-        mslp = pres[0,0,:,:]*np.exp(exponent)
+        exponent = (grav * Z[0, 0, :, :]) / (rgas * T[0, 0, :, :])
+        mslp = pres[0, 0, :, :] * np.exp(exponent)
 
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        pres = None
+        Z = None
+        T = None
+        exponent = None
 
         return mslp
 
-
-    def compute_sph(self,qvapor=None):
+    def compute_sph(self, qvapor=None):
         """calculate the specific humidity
         Inputs:
         -------
@@ -319,40 +355,19 @@ class calc_vars():
         print('calculating specific humidity in kg/kg')
         if (qvapor is None):
             try:
-               qvapor=self.variable_dict['QVAPOR']
+               qvapor = self.variable_dict['QVAPOR']
             except:
-               qvapor=self.get_var('QVAPOR')
+               qvapor = self.get_var('QVAPOR')
 
-        sph=qvapor/(1+qvapor)
+        sph = qvapor / (1 + qvapor)
 
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        qvapor = None
         return sph
 
-
-
-    def compute_sph(self,qvapor=None):
-        """calculate the specific humidity
-        Inputs:
-        -------
-        QVAPOR (kg/kg)
-
-        Returns:
-        -------
-        Specific humidity in kg/kg
-
-        """
-
-        print('calculating specific humidity in kg/kg')
-        if (qvapor is None):
-            try:
-               qvapor=self.variable_dict['QVAPOR']
-            except:
-               qvapor=self.get_var('QVAPOR')
-
-        sph=qvapor/(1+qvapor)
-
-        return sph
-
-    def get_ij_lat_long(self,lat_array,long_array,user_lat,user_lon):
+    def get_ij_lat_long(self, lat_array, long_array, user_lat, user_lon):
         """This function is designed to return the closest grid point to your chosen lat, long.
         Inputs:
         ------
@@ -376,39 +391,39 @@ class calc_vars():
             """
         verbose=True
 
-        if (user_lat < np.min(lat_array)) | (user_lat > np.max(lat_array)) |  (user_lon < np.min(long_array)) | (user_lon > np.max(long_array)):
+        if (user_lat < np.min(lat_array)) or (user_lat > np.max(lat_array)) or  (user_lon < np.min(long_array)) or (user_lon > np.max(long_array)):
             print('point outside array bounds, skipping')
-            return np.nan,np.nan
+            return np.nan, np.nan
 
-        lat_diff=np.abs(lat_array-user_lat)
-        lon_diff=np.abs(long_array-user_lon)
+        lat_diff = np.abs(lat_array - user_lat)
+        lon_diff = np.abs(long_array - user_lon)
 
-        distance_diff=np.sqrt(np.square(lat_diff)+np.square(lon_diff))
+        distance_diff = np.sqrt(np.square(lat_diff) + np.square(lon_diff))
         try:
-            min_position=np.where((distance_diff==np.min(distance_diff)) & (disance_diff.mask == False))
+            min_position = np.where((distance_diff == np.min(distance_diff)) and (disance_diff.mask == False))
         except:
             if verbose:
                 print('get_i_j warning, not a masked array')
-            min_position=np.where(distance_diff==np.min(distance_diff))
+            min_position = np.where(distance_diff == np.min(distance_diff))
 
-        if(len(np.shape(lat_array)) == 3):
-
+        if (len(np.shape(lat_array)) == 3):
             if (len(lat_array[min_position]) != 1):
-                print('warning not a unique answer, there are ',len(lat_array[min_position]), ' closest points, chosing the first one')
-            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-            print('                                  result was (' ,lat_array[min_position][0],',',long_array[min_position][0],')')
+                print('warning not a unique answer, there are ', len(lat_array[min_position]), ' closest points, chosing the first one')
+            print('finding the closest grid point to coordinate (', user_lat, ',', user_lon, ')')
+            print('                                  result was (' , lat_array[min_position][0], ',', long_array[min_position][0], ')')
             print('')
-            return min_position[1][0],min_position[2][0]
+            return min_position[1][0], min_position[2][0]
         elif(len(np.shape(lat_array)) == 2):
             if (len(lat_array[min_position]) != 1):
-                print('warning not a unique answer, there are ',len(lat_array[min_position]), ' closest points, chosing the first one')
-            print('finding the closest grid point to coordinate (',user_lat,',' ,user_lon,')')
-            print('                                  result was (' ,lat_array[min_position][0],',',long_array[min_position][0],')')
+                print('warning not a unique answer, there are ', len(lat_array[min_position]), ' closest points, chosing the first one')
+            print('finding the closest grid point to coordinate (', user_lat, ',', user_lon, ')')
+            print('                                  result was (' , lat_array[min_position][0], ',', long_array[min_position][0], ')')
             print('')
-            return min_position[0][0],min_position[1][0]
+
+            return min_position[0][0], min_position[1][0]
 
 
-    def interp_to_height(self,height_levels, height_on_model_levels,input_variable):
+    def interp_to_height(self, height_levels, height_on_model_levels, input_variable):
         """interpolate your data from model levels to height above ground
         Inputs:
         -------
@@ -428,28 +443,39 @@ class calc_vars():
         """
 
         if (len(np.shape(input_variable)) == 4):
-            ti_dim=np.shape(input_variable)[0]
-            hi_dim=np.shape(input_variable)[1]
-            sn_dim=np.shape(input_variable)[2]
-            we_dim=np.shape(input_variable)[3]
-            output_variable=np.zeros((ti_dim,len(height_levels),sn_dim,we_dim),dtype=np.float32)
+            ti_dim = np.shape(input_variable)[0]
+            hi_dim = np.shape(input_variable)[1]
+            sn_dim = np.shape(input_variable)[2]
+            we_dim = np.shape(input_variable)[3]
+            output_variable = np.zeros((ti_dim,
+                                       len(height_levels),
+                                       sn_dim,we_dim),
+                                       dtype=np.float32
+                                       )
 
             for the_time in range(ti_dim):
                 for i in range(sn_dim):
                     for j in range(we_dim):
-                        #output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j],left=np.nan,right=np.nan)
-                        output_variable[the_time,:,i,j] = s.interp(height_levels[:],height_on_model_levels[the_time,:,i,j],input_variable[the_time,:,i,j])
+                        output_variable[the_time,
+                                        :,
+                                        i,
+                                        j] = s.interp(height_levels[:],
+                                                height_on_model_levels[the_time, :, i, j],
+                                                input_variable[the_time, :, i, j]
+                                                )
 
-
-        if (len(np.shape(input_variable)) == 1):
-            hi_dim=np.shape(input_variable)[0]
-            output_variable=np.zeros((len(height_levels)),dtype=np.float32)
+        if len(np.shape(input_variable)) == 1:
+            hi_dim = np.shape(input_variable)[0]
+            output_variable = np.zeros((len(height_levels)), dtype=np.float32)
             #output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:],left=np.nan,right=np.nan)
-            output_variable[:] = s.interp(height_levels[:],height_on_model_levels[:],input_variable[:])
+            output_variable[:] = s.interp(height_levels[:],
+                                          height_on_model_levels[:],
+                                          input_variable[:])
+
         return output_variable
 
 
-    def interp_to_pressure(self,pres_levels, pres_on_model_levels,input_variable):
+    def interp_to_pressure(self,pres_levels, pres_on_model_levels, input_variable):
         """interpolate your data from model levels to a given set of pressure levels
         Note that this is just a test and might be buggy, check the code and use at own risk
         simon made this when tired.
@@ -472,30 +498,51 @@ class calc_vars():
         """
 
         if (len(np.shape(input_variable)) == 4):
-            ti_dim=np.shape(input_variable)[0]
-            hi_dim=np.shape(input_variable)[1]
-            sn_dim=np.shape(input_variable)[2]
-            we_dim=np.shape(input_variable)[3]
-            output_variable=np.zeros((ti_dim,len(pres_levels),sn_dim,we_dim),dtype=np.float32)
-            input_variable_rev=np.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=np.float32)
-            pres_on_model_levels_rev=np.zeros((ti_dim,hi_dim,sn_dim,we_dim),dtype=np.float32)
+            ti_dim = np.shape(input_variable)[0]
+            hi_dim = np.shape(input_variable)[1]
+            sn_dim = np.shape(input_variable)[2]
+            we_dim = np.shape(input_variable)[3]
+            output_variable = np.zeros((ti_dim,
+                                        len(pres_levels),
+                                        sn_dim,
+                                        we_dim),
+                                        dtype=np.float32)
 
+            input_variable_rev = np.zeros((ti_dim,
+                                           hi_dim,
+                                           sn_dim,
+                                           we_dim),
+                                           dtype=np.float32)
+
+            pres_on_model_levels_rev = np.zeros((ti_dim,
+                                                 hi_dim,
+                                                 sn_dim,
+                                                 we_dim),
+                                                 dtype=np.float32)
 
             for ti in range(ti_dim):
                 for k in range(hi_dim):
-                    pres_on_model_levels_rev[ti,hi_dim -1 - k,:,:] = pres_on_model_levels[ti,k,:,:]
-                    input_variable_rev[ti,hi_dim -1 - k,:,:] = input_variable[ti,k,:,:]
+                    pres_on_model_levels_rev[ti, hi_dim -1 - k, :, :] = pres_on_model_levels[ti, k, :, :]
+                    input_variable_rev[ti, hi_dim -1 - k, :, :] = input_variable[ti, k, :, :]
 
             for the_time in range(ti_dim):
                 for i in range(sn_dim):
                     for j in range(we_dim):
-                        output_variable[the_time,:,i,j] = s.interp(pres_levels[:],pres_on_model_levels_rev[the_time,:,i,j],input_variable_rev[the_time,:,i,j],left=np.nan,right=np.nan)
+                        output_variable[the_time, :, i, j] = s.interp(pres_levels[:],
+                                                                      pres_on_model_levels_rev[the_time, :, i, j],
+                                                                      input_variable_rev[the_time, :, i, j],
+                                                                      left=np.nan,
+                                                                      right=np.nan
+                                                                      )
 
-        if (len(np.shape(input_variable)) == 1):
-            hi_dim=np.shape(input_variable)[0]
-            output_variable=np.zeros((len(pres_levels)),dtype=np.float32)
-            output_variable[:] = s.interp(pres_levels[:],pres_on_model_levels[:],input_variable[:],left=np.nan,right=np.nan)
-
+        if len(np.shape(input_variable)) == 1:
+            hi_dim = np.shape(input_variable)[0]
+            output_variable = np.zeros((len(pres_levels)), dtype=np.float32)
+            output_variable[:] = s.interp(pres_levels[:],
+                                          pres_on_model_levels[:],
+                                          input_variable[:],
+                                          left=np.nan,
+                                          right=np.nan)
         return output_variable
 
     def calculate_dbz_lin(self):
@@ -747,61 +794,62 @@ class calc_vars():
             print('reflectivity functions for ferrier scheme will not be available untill you do this')
 
         try:
-            P1D=self.variable_dict['PRES']*100 # Pressure (PA)
+            P1D = self.variable_dict['PRES'] * 100 # Pressure (PA)
         except:
-            P1D=self.get_var('PRES')*100
+            P1D = self.get_var('PRES') * 100
         try:
-            T1D=self.variable_dict['TEMP'] # Temperature (K)
+            T1D = self.variable_dict['TEMP'] # Temperature (K)
         except:
-            T1D=self.get_var('TEMP')
+            T1D = self.get_var('TEMP')
         try:
-            Q1D=self.variable_dict['SPH'] # Specific Humidity (kg/kg)
+            Q1D = self.variable_dict['SPH'] # Specific Humidity (kg/kg)
         except:
-            Q1D=self.get_var('SPH')
+            Q1D = self.get_var('SPH')
         try:
-            C1D=self.variable_dict['CWM'] # Total Condensate (CWM, kg/kg)
+            C1D = self.variable_dict['CWM'] # Total Condensate (CWM, kg/kg)
         except:
-            C1D=self.get_var('CWM')
+            C1D = self.get_var('CWM')
         try:
-            QW1=self.variable['QCLOUD'] # QCLOUD
+            QW1 = self.variable['QCLOUD'] # QCLOUD
         except:
-            QW1=self.get_var('QCLOUD')
+            QW1 = self.get_var('QCLOUD')
         try:
-            QR1=self.variable['QRAIN'] # QRAIN
+            QR1 = self.variable['QRAIN'] # QRAIN
         except:
-            QR1=self.get_var('QRAIN')
+            QR1 = self.get_var('QRAIN')
         try:
-            QI1=self.variable['QSNOW'] # QSNOW
+            QI1 = self.variable['QSNOW'] # QSNOW
         except:
-            QI1=self.get_var('QSNOW')
+            QI1 = self.get_var('QSNOW')
+            if QI1 is None:
+                QI1 = np.zeros_like(QR1) # fix for Ferrier in ARW
 
-        if (self.wrf_core == 'ARW'):
+        if self.wrf_core == 'ARW':
             try:
-                FI1D=self.variable_dict['F_ICE_PHY'] # F_ice (fraction of condensate in form of ice)
+                FI1D = self.variable_dict['F_ICE_PHY'] # F_ice (fraction of condensate in form of ice)
             except:
-                FI1D=self.get_var('F_ICE_PHY')
+                FI1D = self.get_var('F_ICE_PHY')
             try:
-                FR1D=self.variable_dict['F_RAIN_PHY'] # F_rain (fraction of liquid water in form of rain
+                FR1D = self.variable_dict['F_RAIN_PHY'] # F_rain (fraction of liquid water in form of rain
             except:
-                FR1D=self.get_var('F_RAIN_PHY')
+                FR1D = self.get_var('F_RAIN_PHY')
             try:
-                FS1D=self.variable_dict['F_RIMEF_PHY'] # F_RimeF ("Rime Factor", ratio of total ice growth to deposition growth)
+                FS1D = self.variable_dict['F_RIMEF_PHY'] # F_RimeF ("Rime Factor", ratio of total ice growth to deposition growth)
             except:
-                FS1D=self.get_var('F_RIMEF_PHY')
-
-        elif (self.wrf_core == 'NMM'):
+                FS1D = self.get_var('F_RIMEF_PHY')
+        elif self.wrf_core == 'NMM':
             try:
-                FI1D=self.variable_dict['F_ICE'] # F_ice (fraction of condensate in form of ice)
+                FI1D = self.variable_dict['F_ICE'] # F_ice (fraction of condensate in form of ice)
             except:
-                FI1D=self.get_var('F_ICE')
+                FI1D = self.get_var('F_ICE')
             try:
-                FR1D=self.variable_dict['F_RAIN'] # F_rain (fraction of liquid water in form of rain
+                FR1D = self.variable_dict['F_RAIN'] # F_rain (fraction of liquid water in form of rain
             except:
-                FR1D=self.get_var('F_RAIN')
+                FR1D = self.get_var('F_RAIN')
             try:
-                FS1D=self.variable_dict['F_RIMEF'] # F_RimeF ("Rime Factor", ratio of total ice growth to deposition growth)
+                FS1D = self.variable_dict['F_RIMEF'] # F_RimeF ("Rime Factor", ratio of total ice growth to deposition growth)
             except:
-                FS1D=self.get_var('F_RIMEF')
+                FS1D = self.get_var('F_RIMEF')
         else:
             print('microhpysics variables not found, check for F_ICE, FRAIN,F_RIMEF')
             return None
@@ -809,42 +857,84 @@ class calc_vars():
         # Read in MASSR and MASSI arrays from text files
         # The text files are from ETAMPNEW_DATA 
         # These are used in the MICROINIT.f subroutine of CALMICT.f
-        fid_massr=open(PYWRFPATH+'/library/eta_tables_massr.txt','r')
-        fid_massi=open(PYWRFPATH+'/library/eta_tables_massi.txt','r')
+        fid_massr = open(PYWRFPATH+'/library/eta_tables_massr.txt', 'r')
+        fid_massi = open(PYWRFPATH+'/library/eta_tables_massi.txt', 'r')
 
-        MASSR=np.array(fid_massr.readline().split(','),dtype=np.float32)
-        MASSI=np.array(fid_massi.readline().split(','),dtype=np.float32)
+        MASSR = np.array(fid_massr.readline().split(','), dtype=np.float32)
+        MASSI = np.array(fid_massi.readline().split(','), dtype=np.float32)
 
         # Set up grid (vertical levels = mkzh, NSdim = y = miy, WEdim = x = mjx, ) 
-        if (len(np.shape(FS1D)) == 4):
-            ntimes=np.shape(FS1D)[0]
-            mkzh=np.shape(FS1D)[1]
-            mjx=np.shape(FS1D)[2]   # NS-DIMENSION
-            miy=np.shape(FS1D)[3]   # WE-DIMENSION
+        if len(np.shape(FS1D)) == 4:
+            ntimes = np.shape(FS1D)[0]
+            mkzh = np.shape(FS1D)[1]
+            mjx = np.shape(FS1D)[2]   # NS-DIMENSION
+            miy = np.shape(FS1D)[3]   # WE-DIMENSION
 
-
-        QS1                =np.zeros((mjx,miy),dtype=np.float32)         # "Snow" (precipitation ice) mixing ratio (kg/kg)
-        Tdbz        =np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)         # output array (currently DBZ1)        
-        Rdbz        =np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)         # output array (currently DBZR)
-        Idbz        =np.zeros((ntimes,mkzh,mjx,miy),dtype=np.float32)         # output array (currently DBZI)
-        DBZ1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor in dBZ; ie., 10*Log10(Z)
-        DBZR1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor from rain in dBZ
-        DBZI1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor from ice (all forms) in dBZ
-        DBZC1        =np.zeros((mjx,miy),dtype=np.float32)         # Equivalent radar reflectivity factor from parameterized convection in dBZ
-        NLICE1        =np.zeros((mjx,miy),dtype=np.float32)        # Time-averaged number concentration of large ice
-        CUREFL        =np.zeros((mjx,miy),dtype=np.float32)        # Radar reflectivity contribution from convection (mm**6/m**3)
+        QS1 = np.zeros((mjx, miy), dtype=np.float32) # "Snow" (precipitation ice) mixing ratio (kg/kg)
+        Tdbz = np.zeros((ntimes, mkzh, mjx, miy), dtype=np.float32) # output array (currently DBZ1)
+        Rdbz = np.zeros((ntimes, mkzh, mjx, miy), dtype=np.float32) # output array (currently DBZR)
+        Idbz = np.zeros((ntimes, mkzh, mjx, miy), dtype=np.float32) # output array (currently DBZI)
+        DBZ1 = np.zeros((mjx, miy), dtype=np.float32) # Equivalent radar reflectivity factor in dBZ; ie., 10*Log10(Z)
+        DBZR1 = np.zeros((mjx, miy), dtype=np.float32) # Equivalent radar reflectivity factor from rain in dBZ
+        DBZI1 = np.zeros((mjx, miy), dtype=np.float32) # Equivalent radar reflectivity factor from ice (all forms) in dBZ
+        DBZC1 = np.zeros((mjx, miy), dtype=np.float32) # Equivalent radar reflectivity factor from parameterized convection in dBZ
+        NLICE1 = np.zeros((mjx, miy), dtype=np.float32) # Time-averaged number concentration of large ice
+        CUREFL = np.zeros((mjx ,miy), dtype=np.float32) # Radar reflectivity contribution from convection (mm**6/m**3)
 
         im = mjx
         jm = miy
 
         for ti in range(ntimes):
             for k in range(mkzh):
-                 #Tdbz[ti,k,:,:], Rdbz[ti,k,:,:], Idbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],T1D[ti,k,:,:],Q1D[ti,k,:,:],C1D[ti,k,:,:],FI1D[ti,k,:,:],FR1D[ti,k,:,:],FS1D[ti,k,:,:],CUREFL,QW1[ti,k,:,:],QI1[ti,k,:,:],QR1[ti,k,:,:],QS1,DBZ1,DBZR1,DBZI1,DBZC1,NLICE1,miy,mjx,MASSR,MASSI)
-
-                 Tdbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],T1D[ti,k,:,:],Q1D[ti,k,:,:],C1D[ti,k,:,:],FI1D[ti,k,:,:],FR1D[ti,k,:,:],FS1D[ti,k,:,:],CUREFL,QW1[ti,k,:,:],QI1[ti,k,:,:],QR1[ti,k,:,:],QS1,DBZ1,DBZR1,DBZI1,DBZC1,NLICE1,miy,mjx,MASSR,MASSI,im,jm)
+                 Tdbz[ti,k,:,:] = dbzcalc_ferrier_py.calmict(P1D[ti,k,:,:],
+                                                             T1D[ti,k,:,:],
+                                                             Q1D[ti,k,:,:],
+                                                             C1D[ti,k,:,:],
+                                                             FI1D[ti,k,:,:],
+                                                             FR1D[ti,k,:,:],
+                                                             FS1D[ti,k,:,:],
+                                                             CUREFL,
+                                                             QW1[ti,k,:,:],
+                                                             QI1[ti,k,:,:],
+                                                             QR1[ti,k,:,:],
+                                                             QS1,
+                                                             DBZ1,
+                                                             DBZR1,
+                                                             DBZI1,
+                                                             DBZC1,
+                                                             NLICE1,
+                                                             miy,
+                                                             mjx,
+                                                             MASSR,
+                                                             MASSI,
+                                                             im,
+                                                             jm
+                                                             )
         if self.save_data:
             self.variable_dict.update({'dbz_ferrier':Tdbz})
 
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        QS1 = None
+        Rdbz = None
+        Idbz = None
+        DBZ1 = None
+        DBZR1 = None
+        DBZI1 = None
+        DBZC1 = None
+        NLICE1 = None
+        CUREFL = None
+        P1D = None
+        T1D = None
+        Q1D = None
+        C1D = None
+        QW1 = None
+        QR1 = None
+        QI1 = None
+        FI1D = None
+        FR1D = None
+        FS1D = None
         return Tdbz #, Rdbz, Idbz
 
 
@@ -872,19 +962,19 @@ class calc_vars():
 
         try:
             if use_NIO:
-                prs=self.get_var('PINT')
+                prs = self.get_var('PINT')
             else:
-                prs=self.get_var('PINT')
+                prs = self.get_var('PINT')
         except:
             print('cannt fint your variable PINT')
         try:
-            ter=self.variable['FIS']/9.81 # Terrain height = surface geopotential height/9.81
+            ter = self.variable['FIS']/9.81 # Terrain height = surface geopotential height/9.81
         except:
-            ter=self.get_var('FIS')/9.81
+            ter = self.get_var('FIS')/9.81
 
         #try:
         if 1==1:
-            vtmk=self.compute_vtmk()
+            vtmk = self.compute_vtmk()
         #except:
         #    print('could not calculate virtual temperature')
         #    return  None
@@ -894,33 +984,31 @@ class calc_vars():
         # Z_2 = Z_1 + (R_T_v/g)*[log(p_1) - log(p_2)] 
 
         #fix up geopotential height at broken points
-        ter=np.where(ter < 0,0,ter)
-
+        ter = np.where(ter < 0,0,ter)
 
         # Set up grid (vertical levels = mkzh, NSdim = y = miy, WEdim = x = mjx, ) 
-        if (len(np.shape(prs)) == 4):
-            ntimes=np.shape(prs)[0]
-            mkzh=np.shape(prs)[1]  #all values  variables already destaggered in Z
-            mjx=np.shape(prs)[2]   # NS-DIMENSION
-            miy=np.shape(prs)[3]   # WE-DIMENSION
+        if len(np.shape(prs)) == 4:
+            ntimes = np.shape(prs)[0]
+            mkzh = np.shape(prs)[1]  #all values  variables already destaggered in Z
+            mjx = np.shape(prs)[2]   # NS-DIMENSION
+            miy = np.shape(prs)[3]   # WE-DIMENSION
 
-
-        log_p=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
-        base_level=np.zeros((ntimes,mjx,miy), dtype="float")
-        ght=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
+        log_p = np.zeros((ntimes, mkzh, mjx, miy), dtype="float")
+        base_level = np.zeros((ntimes, mjx, miy), dtype="float")
+        ght = np.zeros((ntimes, mkzh, mjx, miy), dtype="float")
 
         for ti in range(ntimes):
             for k in range(mkzh):
-               log_p[ti,k,:,:]=np.log(prs[ti,k,:,:])
+               log_p[ti, k, :, :] = np.log(prs[ti, k, :, :])
 
-        rgas=287.04
-        grav=9.81
+        rgas = 287.04
+        grav = 9.81
 
         for ti in range(ntimes):
-            ght[ti,0,:,:] = ter[ti,:,:]
+            ght[ti, 0, :, :] = ter[ti, :, :]
             for k in range(1, mkzh):
-                tv_average=(vtmk[ti,k-1,:,:]) # not doing average for some reason
-                ght[ti,k,:,:]  = ght[ti,k-1,:,:] + ((rgas*tv_average)/grav)*(log_p[ti,k-1,:,:] - log_p[ti,k,:,:])
+                tv_average = (vtmk[ti, k-1, :, :]) # not doing average for some reason
+                ght[ti, k, :, :]  = ght[ti, k-1, :, :] + ((rgas*tv_average)/grav)*(log_p[ti,k-1,:,:] - log_p[ti,k,:,:])
 
         #now we have ght on staggared levels, we must destagger
         #Actually now ght should be already destaggered because all the variables that made it were destagged 
@@ -932,14 +1020,24 @@ class calc_vars():
         #return ght_destag 
         if self.save_data:
             self.variable_dict.update({'GHT':ght})
+
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        prs = None
+        ter = None
+        vtmk = None
+        log_p = None
+        base_level = None
+
         return ght
 
-    def compute_extrema(self,mat,mode='wrap',window=10):
+    def compute_extrema(self, mat, mode='wrap', window=10):
         from scipy.ndimage.filters import maximum_filter, minimum_filter
         """find the indicies of local extrema (min and max
         in the local array. """
-        mn=minimum_filter(mat,size=window,mode=mode)
-        mx=maximum_filter(mat,size=window,mode=mode)
+        mn = minimum_filter(mat, size=window, mode=mode)
+        mx = maximum_filter(mat, size=window, mode=mode)
         return np.nonzero(mat == mn), np.nonzero(mat==mx)
 
     def write_netcdf_file(self,input_variable,var_name,directory='.',filename='new_output', var_dim=('T','BT','SN','WE'), var_type='f'):
@@ -2095,40 +2193,46 @@ class wrf_file(calc_vars, wrf_plots):
                 count+=1
                 print(var_color  , line, end=' ')
 
-    def _full_variable(self,var_tuple,fullvar):
+    def _full_variable(self, var_tuple, fullvar):
         'this routine combines base and perterbation variables'
-        print(fullvar, '--->',var_tuple[0],'+', var_tuple[1] ,'\n')
+        print(fullvar, '--->', var_tuple[0], '+', var_tuple[1] ,'\n')
 
-        if (type(var_tuple[0]) == type('')):
-            invar1=self.get_var(var_tuple[0])
-            stag1='-'
+        if type(var_tuple[0]) == type(''):
+            invar1 = self.get_var(var_tuple[0])
+            stag1 = '-'
 #            array1=invar1.get_value()
-        elif (type(var_tuple[0]) == type(1.)):
-            invar1=var_tuple[0] #does not have to be an array, in fact probably isnt
-            stag1='-'
+        elif type(var_tuple[0]) == type(1.):
+            invar1 = var_tuple[0] #does not have to be an array, in fact probably isnt
+            stag1 = '-'
         else:
             print('error')
 
-        if (type(var_tuple[1]) == type('')):
-            invar2=self.get_var(var_tuple[1])
-            stag2='-'
-        elif (type(var_tuple[1]) == type(1.)):
-            invar2=var_tuple[1] #does not have to be an array, in fact probably isnt
-            stag2='-'
+        if type(var_tuple[1]) == type(''):
+            invar2 = self.get_var(var_tuple[1])
+            stag2 = '-'
+        elif type(var_tuple[1]) == type(1.):
+            invar2 = var_tuple[1] #does not have to be an array, in fact probably isnt
+            stag2 = '-'
         else:
             print('error')
 
-        if (len(stag1) != len(stag2)):
+        if len(stag1) != len(stag2):
             print('warning, both variables are staggared the same')
         else:
-            stag=stag1
+            stag = stag1
 
-        full_array=invar1+invar2
+        full_array = invar1 + invar2
+
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        invar1 = None
+        invar2 = None
 
         return full_array, stag
 
 
-    def get_var(self,var,level=False,multi=False):
+    def get_var(self, var, level=False, multi=False):
         """get WRF variables from the file, destagger if necessary
         can use list_var to see which variables your file contains.
         Adding optional level argument, default is false, which means get the variable
@@ -2155,78 +2259,75 @@ class wrf_file(calc_vars, wrf_plots):
         if (var in self.variable_dict) and not level:
             return self.variable_dict[var]
 
-
         if not self.wrf_core:
             print("wrf core type not found, you should be using either ARW or NMM")
             exit()
         elif (self.wrf_core == 'ARW'):
-            pert_vars=perturbation_variables.pert_variable_dict_ARW
-            calc_vars=perturbation_variables.calc_variable_dict_ARW
+            pert_vars = perturbation_variables.pert_variable_dict_ARW
+            calc_vars = perturbation_variables.calc_variable_dict_ARW
         elif (self.wrf_core == 'NMM'):
-            pert_vars=perturbation_variables.pert_variable_dict_NMM
-            calc_vars=perturbation_variables.calc_variable_dict_NMM
+            pert_vars = perturbation_variables.pert_variable_dict_NMM
+            calc_vars = perturbation_variables.calc_variable_dict_NMM
         else:
             #print('wrf core is '+self.wrf_core)
-            pert_vars={}
-            calc_vars={}
+            pert_vars = {}
+            calc_vars = {}
 
-
-        if (var in list(pert_vars.keys())):
-            data_array, stag = self._full_variable(pert_vars[var],var)
-        elif (var in list(calc_vars.keys())):
-            stag='-'
+        if var in list(pert_vars.keys()):
+            data_array, stag = self._full_variable(pert_vars[var], var)
+        elif var in list(calc_vars.keys()):
+            stag = '-'
         else:
             try:
-                input_var  =  self.dataset.variables[var]
+                input_var = self.dataset.variables[var]
             except KeyError:
-                print('your variable ' + var+ ' does not exist')
-                input_var=None
+                print('your variable ' + var + ' does not exist')
+                input_var = None
                 return input_var
             except ValueError:
                 print('Error ValueError')
 
             if use_NIO:
-                vartype    =  input_var.typecode()
-                numDims    =  input_var.rank
-                dimSizes   =  input_var.shape
-                dimNames   =  input_var.dimensions
+                vartype = input_var.typecode()
+                numDims = input_var.rank
+                dimSizes = input_var.shape
+                dimNames = input_var.dimensions
                 try:
-                    stag           = input_var.stagger
+                    stag = input_var.stagger
                 except:
                     stag = '-'
                 if stag == "":
                     stag = '-'
             else:
-                if (self.file_type == 'nc'):
-                    vartype    =  input_var.dtype
-                    numDims    =  input_var.ndim
-                    dimSizes   =  input_var.shape
-                    dimNames   =  input_var.dimensions
+                if self.file_type == 'nc':
+                    vartype = input_var.dtype
+                    numDims = input_var.ndim
+                    dimSizes = input_var.shape
+                    dimNames = input_var.dimensions
                     try:
-                        stag           = input_var.stagger
+                        stag = input_var.stagger
                     except:
                         stag = '-'
                     if stag == "":
                         stag = '-'
                 elif (self.file_type == 'grb'):
-                    vartype    =  'fake'
-                    numDims    =  input_var['ndims']
-                    dimSizes   =  input_var['shape']
-                    dimNames   =  'fake'
+                    vartype = 'fake'
+                    numDims = input_var['ndims']
+                    dimSizes = input_var['shape']
+                    dimNames = 'fake'
                     try:
-                        stag           = input_var.stagger
+                        stag = input_var.stagger
                     except:
                         stag = '-'
                     if stag == "":
                         stag = '-'
 
-
             if self.wrf_core == 'NMM':
         #        print 'ASSUMING ALL NMM HORIZONTAL VARIABLES ARE NOTSTAGGERED, NOT SURE IF THIS IS CORRECT'
-                if stag !='Z':
-                    stag="-"
+                if stag != 'Z':
+                    stag = "-"
                     #undoing the not staggared assumption
-                    stag="H"
+                    stag = "H"
             #try:
 #            if (var != 'Times'):
 #                    #Simon hacking below to get times greater than 100 hours working, but not able to test mupltile cpu output so i might break it..
@@ -2252,149 +2353,158 @@ class wrf_file(calc_vars, wrf_plots):
 #                        pass
 
             if use_NIO:
-                data_array=input_var.get_value()
+                data_array = input_var.get_value()
             else:
                 if self.file_type == 'nc':
-                    data_array=input_var[:]
+                    data_array = input_var[:]
                 elif self.file_type == 'grb':
                     if not level:
-                        data_array=np.ma.masked_equal(input_var['data'],9999.)
+                        data_array = np.ma.masked_equal(input_var['data'], 9999.)
                     else:
-                        data_array=input_var['levels']
-        if (multi == True):
+                        data_array = input_var['levels']
+        if multi == True:
             return data_array
 
-        if (stag != '-'):
+        if stag != '-':
             print('Your variable', var, ' is now being de-staggered\n')
-            if (self.wrf_core == 'ARW'):
-                data_array=wrf_user_unstagger.wrf_user_unstagger_ARW(data_array,stag)
+            if self.wrf_core == 'ARW':
+                data_array = wrf_user_unstagger.wrf_user_unstagger_ARW(data_array, stag)
             elif(self.wrf_core == 'NMM') and (var != 'Times'):
-                print('before',np.shape(data_array))
-                data_array=    wrf_user_unstagger.wrf_user_unstagger_NMM(data_array,stag)
-                print('after',np.shape(data_array))
+                print('before', np.shape(data_array))
+                data_array =  wrf_user_unstagger.wrf_user_unstagger_NMM(data_array, stag)
+                print('after', np.shape(data_array))
                 print('')
             elif self.wrf_core == 'UPP':
                 print('UPP file, should already be destaggared?')
             else:
                 print('Error: WRF core not known, should be either ARW or NMM')
 
-
-        #variables should alredy be destaggared by this point because calc works on variable already recieved.
-        if (var in list(calc_vars.keys())):
+        # variables should alredy be destaggared by this point because calc works on variable already recieved.
+        if var in list(calc_vars.keys()):
             for dependant_variable in calc_vars[var]:
-                if ((dependant_variable in self.variable_dict) == False):
-                    print('also need to extract/calculate', dependant_variable, ' if you want to calculate',var, ' doing this now\n')
-                    data_array = self.get_var(dependant_variable,multi=False)
+                if (dependant_variable in self.variable_dict) == False:
+                    print('also need to extract/calculate', dependant_variable, ' if you want to calculate', var, ' doing this now\n')
+                    data_array = self.get_var(dependant_variable, multi=False)
                 else:
                     data_array = self.variable_dict[dependant_variable]
 
-            if (var == 'TEMP') & (self.wrf_core == 'ARW'):
+            if (var == 'TEMP') and (self.wrf_core == 'ARW'):
                 try:
-                    data_array= self.compute_tk(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
+                    data_array = self.compute_tk(self.variable_dict[calc_vars[var][0]],
+                                                 self.variable_dict[calc_vars[var][1]])
                 except:
-                    var1=self.get_var(calc_vars[var][0])
-                    var2=self.get_var(calc_vars[var][1])
-                    data_array= self.compute_tk(var1,var2)
-            elif(var == 'TEMP') & (self.wrf_core == 'NMM'):
+                    var1 = self.get_var(calc_vars[var][0])
+                    var2 = self.get_var(calc_vars[var][1])
+                    data_array= self.compute_tk(var1, var2)
+            elif(var == 'TEMP') and (self.wrf_core == 'NMM'):
                 try:
-                    data_array=self.variable_dict['T']
+                    data_array = self.variable_dict['T']
                 except:
-                    data_array=self.get_var('T')
+                    data_array = self.get_var('T')
 
-            if (var == 'RH'):
+            if var == 'RH':
                 try:
-                    data_array= self.compute_rh(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]],self.variable_dict[calc_vars[var][2]])
+                    data_array = self.compute_rh(self.variable_dict[calc_vars[var][0]],
+                                                 self.variable_dict[calc_vars[var][1]],
+                                                 self.variable_dict[calc_vars[var][2]])
                 except:
-                    var1=self.get_var(calc_vars[var][0])
-                    var2=self.get_var(calc_vars[var][1])
-                    var3=self.get_var(calc_vars[var][2])
-                    data_array= self.compute_rh(var1,var2,var3)
-            if (var == 'TD'):
+                    var1 = self.get_var(calc_vars[var][0])
+                    var2 = self.get_var(calc_vars[var][1])
+                    var3 = self.get_var(calc_vars[var][2])
+                    data_array= self.compute_rh(var1, var2, var3)
+            if var == 'TD':
                 try:
-                    data_array= self.compute_td(self.variable_dict[calc_vars[var][0]],self.variable_dict[calc_vars[var][1]])
+                    data_array = self.compute_td(self.variable_dict[calc_vars[var][0]],
+                                                 self.variable_dict[calc_vars[var][1]])
                 except:
-                    var1=self.get_var(calc_vars[var][0])
-                    var2=self.get_var(calc_vars[var][1])
-                    data_array= self.compute_td(var1,var2)
-            if (var == 'PRES'):
-                data_array= data_array/100.
-            if (var == 'Z'):
+                    var1 = self.get_var(calc_vars[var][0])
+                    var2 = self.get_var(calc_vars[var][1])
+                    data_array= self.compute_td(var1, var2)
+            if var == 'PRES':
+                data_array = data_array / 100.
+            if var == 'Z':
                 if self.wrf_core == 'ARW':
                     print('dividing geopotential by 9.81 to give height in m')
-                    data_array= data_array/9.81
+                    data_array = data_array / 9.81
                 elif self.wrf_core == 'NMM':
-                    data_array= self.compute_height()
+                    data_array = self.compute_height()
                 else:
                     print('cant find your wrf core (should be ARW or NMM)')
 
-            if (var == 'SPH'):
+            if var == 'SPH':
                 try:
-                    data_array= self.compute_sph(self.variable_dict[calc_vars[var][0]])
+                    data_array = self.compute_sph(self.variable_dict[calc_vars[var][0]])
                 except:
-                    var1=self.get_var(calc_vars[var][0])
-                    data_array= self.compute_sph(var1)
+                    var1 = self.get_var(calc_vars[var][0])
+                    data_array = self.compute_sph(var1)
 
-            if (var == 'VTMK'):
-                data_array= self.compute_vtmk()
+            if var == 'VTMK':
+                data_array = self.compute_vtmk()
 
-            if (self.wrf_core == 'NMM'):
-                if (var == 'XLONG'):
+            if self.wrf_core == 'NMM':
+                if var == 'XLONG':
                     print('you asked for XLONG but are using the NMM core, I will give you GLON as XLONG so that code still works')
-                    data_array=self.get_var('GLON')
-                    data_array=data_array*57.2957795
+                    data_array = self.get_var('GLON')
+                    data_array = data_array * 57.2957795
 
-                if (var == 'XLAT'):
+                if var == 'XLAT':
                     print('you asked for XLAT but are using the NMM core, I will give you GLAT as XLAT so that code still works')
-                    data_array=self.get_var('GLAT')
-                    data_array=data_array*57.2957795
+                    data_array = self.get_var('GLAT')
+                    data_array = data_array * 57.2957795
 
-        if (var == 'Times'):
+        if var == 'Times':
             try:
                 len(time_list)
             except:
-                time_list=[]
+                time_list = []
             for ti in range(len(data_array)):
                 new_data_array = [x.decode('utf-8') for x in data_array[ti]]
             time_list.append(''.join(new_data_array))
             del(data_array)
-            data_array=time_list
+            data_array = time_list
 
         #BELOW IS FIX FOR NMM COPYGB OUTPUT##
         #it is very hacky, one day i should fix this up, but time is precious and it kinda works
-        if (self.wrf_core == 'UPP_NMM'):
-            chop_value=1
-            do_chop=True
-            temp_array=self.dataset.variables['NLAT_SFC']['data']
-            temp_mask=np.ma.masked_equal(temp_array,9999.0)
+        if self.wrf_core == 'UPP_NMM':
+            chop_value = 1
+            do_chop = True
+            temp_array = self.dataset.variables['NLAT_SFC']['data']
+            temp_mask = np.ma.masked_equal(temp_array, 9999.0)
             if len(np.shape(data_array)) == 3:
                 #first get rid of any row or column which is all invalid
-                _ns_dim=np.shape(temp_mask)[1]
-                _we_dim=np.shape(temp_mask)[2]
-                ns_invalid=np.zeros((_ns_dim))
-                we_invalid=np.zeros((_we_dim))
+                _ns_dim = np.shape(temp_mask)[1]
+                _we_dim = np.shape(temp_mask)[2]
+                ns_invalid = np.zeros((_ns_dim))
+                we_invalid = np.zeros((_we_dim))
                 for ns_dim in range(_ns_dim):
-                    ns_invalid[ns_dim]=temp_mask.mask[0,ns_dim,:].all()
+                    ns_invalid[ns_dim] = temp_mask.mask[0, ns_dim, :].all()
                 for we_dim in range(_we_dim):
-                    we_invalid[we_dim]=temp_mask.mask[0,:,we_dim].all()
-                ns_min=np.argmin(ns_invalid)
-                ns_max=np.argmax(ns_invalid)
-                we_min=np.argmin(we_invalid)
-                we_max=np.argmax(we_invalid)
+                    we_invalid[we_dim] = temp_mask.mask[0, :, we_dim].all()
+                ns_min = np.argmin(ns_invalid)
+                ns_max = np.argmax(ns_invalid)
+                we_min = np.argmin(we_invalid)
+                we_max = np.argmax(we_invalid)
                 if ns_max == 0:
-                    ns_max=ns_dim
-                if we_max==0:
-                    we_max=we_dim
-                temp_array2=temp_array[:,ns_min:ns_max,we_min:we_max]
-                data_array=data_array[:,ns_min:ns_max,we_min:we_max]
+                    ns_max = ns_dim
+                if we_max == 0:
+                    we_max = we_dim
+                temp_array2 = temp_array[:, ns_min:ns_max, we_min:we_max]
+                data_array = data_array[:, ns_min:ns_max, we_min:we_max]
                 while do_chop:
-                    if np.max(temp_array2[:,chop_value:-chop_value,chop_value:-chop_value]) == 9999.:
-                        chop_value+=1
+                    if np.max(temp_array2[:, chop_value:-chop_value, chop_value:-chop_value]) == 9999.:
+                        chop_value += 1
                     else:
-                        do_chop=False
-                new_data=data_array[:,chop_value:-chop_value,chop_value:-chop_value]
-                data_array=new_data
+                        do_chop = False
+                new_data = data_array[:, chop_value:-chop_value, chop_value:-chop_value]
+                data_array = new_data
         if (multi == False) and (not level) and (self.save_data):
             self.variable_dict.update({var:data_array})
+        # Having memory issues with big runs
+        # testing reseting of variables for Garbage Collection
+        # not sure if this actually does anything
+        var1 = None
+        var2 = None
+        var3 = None
 
         return data_array
 
