@@ -3,7 +3,7 @@ import numpy as np
 
 
 def wrf_user_unstagger_ARW (varin, unstagDim):
-    dims =()
+    dims = ()
     dims = np.shape(varin)
     nd = np.shape(dims)[0]
 
@@ -60,12 +60,9 @@ def wrf_user_unstagger_ARW (varin, unstagDim):
 
 
 def wrf_user_unstagger_NMM(varin,unstagDim,test_method=2):
-        verbose=False
         dims_in =()
         dims_in = np.shape(varin)
         rank = np.shape(dims_in)[0]
-        if verbose:
-            print('simon test, ustaggering')
         n_dims=len(np.shape(varin))
 
         dim_ns_in=np.shape(varin)[n_dims-2]
@@ -73,11 +70,9 @@ def wrf_user_unstagger_NMM(varin,unstagDim,test_method=2):
 
         dim_ns_out=dim_ns_in
         dim_we_out=dim_we_in*2
-
-        if verbose:
-            print(n_dims)
-            print('shape of input',np.shape(varin))
         done_Z=False
+
+        #print(unstagDim, n_dims)
         if ( unstagDim == "Z" ):
             if (n_dims == 2):
                 var_out=np.zeros((dim_ns_out,dim_we_out),dtype="float")
@@ -104,8 +99,6 @@ def wrf_user_unstagger_NMM(varin,unstagDim,test_method=2):
             varin=var_out
             dims_in = np.shape(varin)
             rank = np.shape(dims_in)[0]
-            if verbose:
-                print('simon test, ustaggering again, WE this time')
             n_dims=len(np.shape(varin))
 
             dim_ns_in=np.shape(varin)[n_dims-2]
@@ -113,11 +106,6 @@ def wrf_user_unstagger_NMM(varin,unstagDim,test_method=2):
 
             dim_ns_out=dim_ns_in
             dim_we_out=dim_we_in*2
-
-        if verbose:
-            print(n_dims)
-            print('shape of input',np.shape(varin))
-
 
         if (n_dims == 2):
             var_out=np.zeros((dim_ns_out,dim_we_out),dtype="float")
@@ -128,9 +116,6 @@ def wrf_user_unstagger_NMM(varin,unstagDim,test_method=2):
             dim1=np.shape(varin)[0]
             dim2=np.shape(varin)[1]
             var_out=np.zeros((dim1,dim2,dim_ns_out,dim_we_out),dtype="float")
-
-        if verbose:
-            print('shape of output',np.shape(var_out))
 
         #general
         grid_mask=np.zeros((dim_ns_out,dim_we_out),dtype="float")
@@ -293,8 +278,6 @@ def wrf_user_unstagger_NMM(varin,unstagDim,test_method=2):
                 for dim_1 in range(dim1):
                     #for dim_2 in range(dim2):
                         for ii in range(np.shape(grid_mask)[0]):
-                            if verbose:
-                                print(ii)
                             for jj in range(np.shape(grid_mask)[1]):
                                 if (np.isnan(grid_mask[ii,jj])):
                                         try:
