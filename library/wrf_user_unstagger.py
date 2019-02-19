@@ -65,68 +65,31 @@ def wrf_user_unstagger_ARW(varin, unstagDim):
         if (unstagDim == ele):
             return varout
 
-
-def wrf_user_unstagger_NMM(varin, unstagDim):
-    dims_in = ()
+def unstagger_NMM_Z(varin):
     dims_in = np.shape(varin)
-    rank = np.shape(dims_in)[0]
-    n_dims = len(np.shape(varin))
-
-    dim_ns_in = np.shape(varin)[n_dims - 2]
-    dim_we_in = np.shape(varin)[n_dims - 1]
-
-    dim_ns_out = dim_ns_in
-    dim_we_out = dim_we_in * 2
-    done_Z = False
-
-    print(unstagDim, n_dims)
-    if (unstagDim == "Z"):
-        if (n_dims == 3):
-            dim1 = np.shape(varin)[0]
-            var_out = np.zeros((dim1, dim_ns_out, dim_we_out), dtype="float")
-        if (n_dims == 4):
-            dim1 = np.shape(varin)[0]
-            dim2 = np.shape(varin)[1]
-            var_out = np.zeros((dim1, dim2, dim_ns_out, dim_we_out),
-                               dtype="float")
-        dimW = dims_in[rank - 3]
-        if (rank == 5):
-            var_out = 0.5 * (
-                varin[:, :, 0:dimW - 1, :, :] + varin[:, :, 1:dimW - 0, :, :])
-        if (rank == 4):
-            var_out = 0.5 * (
-                varin[:, 0:dimW - 1, :, :] + varin[:, 1:dimW - 0, :, :])
-        if (rank == 3):
-            var_out = 0.5 * (varin[:, 0:dimW - 1] + varin[:, 1:dimW - 0])
-        if (rank == 2):
-            var_out = 0.5 * (varin[:, 0:dimW - 1] + varin[:, 1:dimW - 0])
-            return var_out
-        done_Z = True
-        #return var_out
-
-    ###Incase we Destaggered Z## we need to also do the we dim##
-
-    if done_Z:
-        varin = var_out
-        dims_in = np.shape(varin)
-        rank = np.shape(dims_in)[0]
-        n_dims = len(np.shape(varin))
-
-        dim_ns_in = np.shape(varin)[n_dims - 2]
-        dim_we_in = np.shape(varin)[n_dims - 1]
-
-        dim_ns_out = dim_ns_in
-        dim_we_out = dim_we_in * 2
-
-    if (n_dims == 3):
-        dim1 = np.shape(varin)[0]
-        var_out = np.zeros((dim1, dim_ns_out, dim_we_out), dtype="float")
+    n_dims = len(dims_in)
+    dimW = dims_in[n_dims - 3]
+    if (n_dims == 5):
+        var_out = 0.5 * (
+            varin[:, :, 0:dimW - 1, :, :] + varin[:, :, 1:dimW - 0, :, :])
     if (n_dims == 4):
-        dim1 = np.shape(varin)[0]
-        dim2 = np.shape(varin)[1]
-        var_out = np.zeros((dim1, dim2, dim_ns_out, dim_we_out), dtype="float")
+        var_out = 0.5 * (
+            varin[:, 0:dimW - 1, :, :] + varin[:, 1:dimW - 0, :, :])
+    if (n_dims == 3):
+        var_out = 0.5 * (varin[:, 0:dimW - 1] + varin[:, 1:dimW - 0])
+    if (n_dims == 2):
+        var_out = 0.5 * (varin[:, 0:dimW - 1] + varin[:, 1:dimW - 0])
+    return var_out
+
 
     #general
+def get_gridmask_NMM(dim_ns_out, dim_we_out, unstagDim):
+    """
+    This part is general and should not depend on the
+    higher dimenions, essentially setting up how the 
+    grid is structured
+    """
+
     grid_mask = np.zeros((dim_ns_out, dim_we_out), dtype="float")
     grid = np.zeros((dim_ns_out, dim_we_out), dtype="float")
 
@@ -150,73 +113,57 @@ def wrf_user_unstagger_NMM(varin, unstagDim):
                     grid_mask[ii, jj] = 1
                 if (unstagDim == 'V'):
                     grid_mask[ii, jj] = 'NaN'
+    return grid_mask
+
+def wrf_user_unstagger_NMM(varin, unstagDim):
+    done_Z = False
+    if (unstagDim == "Z"):
+        var_out = unstagger_NMM_Z(varin)
+        done_Z = True
+
+    ###Incase we Destaggered Z## we need to also do the we dim##
+    if done_Z:
+        varin = var_out
+
+    dims_in = np.shape(varin)
+    n_dims = len(dims_in)
+    print(unstagDim, n_dims)
+    if n_dims == 2:
+        # we only have time and height so no need for spatial
+        # fix
+        return var_out
+
+    # spatial dimensions are always the last two
+    dim_ns_in = np.shape(varin)[n_dims - 2]
+    dim_we_in = np.shape(varin)[n_dims - 1]
+    # output grid will have double the WE dimension
+    dim_ns_out = dim_ns_in
+    dim_we_out = dim_we_in * 2
+
+    grid_mask = get_gridmask_NMM(dim_ns_out, dim_we_out, unstagDim)
 
     if (n_dims == 2):
+        # 2 times but no time, i dont think this ever occurs
+        var_out = np.zeros((dim_ns_out, dim_we_out), dtype="float")
         var_out[:, :] = grid_mask[:, :]
-    if (n_dims == 3):
-        for dim_1 in range(dim1):
-            var_out[dim_1, :, :] = grid_mask[:, :]
-    if (n_dims == 4):
-        for dim_1 in range(dim1):
-            for dim_2 in range(dim2):
-                var_out[dim_1, dim_2, :, :] = grid_mask[:, :]
-
-    if (n_dims == 2):
         ii_count = 0
         jj_count = 0
         for ii in range(dim_ns_out):
             for jj in range(dim_we_out):
-                if (np.isnan(grid_mask[ii, jj]) == 1):
+                if np.isnan(grid_mask[ii, jj]):
                     continue
                 else:
                     var_out[ii, jj] = varin[ii_count, jj_count]
                     jj_count = jj_count + 1
-                    if (jj_count == dim_we_in):
+                    if jj_count == dim_we_in:
                         jj_count = 0
                         ii_count = ii_count + 1
-
-    if (n_dims == 3):
-        for dim_1 in range(dim1):
-            ii_count = 0
-            jj_count = 0
-            for ii in range(dim_ns_out):
-                for jj in range(dim_we_out):
-                    if (np.isnan(grid_mask[ii, jj]) == 1):
-                        continue
-                    else:
-                        var_out[dim_1, ii, jj] = varin[dim_1, ii_count,
-                                                       jj_count]
-                        jj_count = jj_count + 1
-                        if (jj_count == dim_we_in):
-                            jj_count = 0
-                            ii_count = ii_count + 1
-
-    if (n_dims == 4):
-        for dim_1 in range(dim1):
-            #for dim_2 in range(dim2):
-            if 1 == 1:
-                ii_count = 0
-                jj_count = 0
-                for ii in range(dim_ns_out):
-                    for jj in range(dim_we_out):
-                        if (np.isnan(grid_mask[ii, jj]) == 1):
-                            continue
-                        else:
-                            var_out[dim_1, :, ii, jj] = varin[
-                                dim_1, :, ii_count, jj_count]
-                            jj_count = jj_count + 1
-                            if (jj_count == dim_we_in):
-                                jj_count = 0
-                                ii_count = ii_count + 1
-
-    ###################now use your copied values to fill in the blank spots###########
-
-
-    #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
-    if (n_dims == 2):
+        # now use your copied values to fill in the blank spots
+        #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
         for ii in range(np.shape(grid_mask)[0]):
             for jj in range(np.shape(grid_mask)[1]):
-                if (np.isnan(var_out[ii, jj])):
+                #if np.isnan(var_out[ii, jj]):
+                if np.isnan(grid_mask[ii, jj]):
                     if (ii + 1 == np.shape(var_out)[0]) | (ii - 1 == -1):
                         continue
                     elif (jj + 1 == np.shape(var_out)[1]) | (jj - 1 == -1):
@@ -225,40 +172,85 @@ def wrf_user_unstagger_NMM(varin, unstagDim):
                         var_out[ii, jj] = 0.25 * (
                             var_out[ii - 1, jj] + var_out[ii + 1, jj] +
                             var_out[ii, jj - 1] + var_out[ii, jj + 1])
+
+
     if (n_dims == 3):
+        dim1 = np.shape(varin)[0]
+        var_out = np.zeros((dim1, dim_ns_out, dim_we_out), dtype="float")
+        var_out[:, :, :] = np.nan
+
+        ii_count = 0
+        jj_count = 0
+        for ii in range(dim_ns_out):
+            for jj in range(dim_we_out):
+                if np.isnan(grid_mask[ii, jj]):
+                    continue
+                else:
+                    var_out[:, ii, jj] = varin[:, ii_count, jj_count]
+                    jj_count = jj_count + 1
+                    if (jj_count == dim_we_in):
+                        jj_count = 0
+                        ii_count = ii_count + 1
+        # now use your copied values to fill in the blank spots
+        #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
         for ii in range(np.shape(grid_mask)[0]):
             for jj in range(np.shape(grid_mask)[1]):
-                if (np.isnan(var_out[0, ii, jj])):
-                    if 1 == 1:
-                        try:
-                            var1 = var_out[0, ii - 1, jj]
-                        except:
-                            var1 = np.nan
-                        try:
-                            var2 = var_out[0, ii + 1, jj]
-                        except:
-                            var2 = np.nan
-                        try:
-                            var3 = var_out[0, ii, jj - 1]
-                        except:
-                            var3 = np.nan
-                        try:
-                            var4 = var_out[0, ii, jj + 1]
-                        except:
-                            var4 = np.nan
-                        var_list = [var1, var2, var3, var4]
-                        nan_sum = np.nansum(var_list)
-                        valid_count = (
-                            len(var_list) - np.sum(np.isnan(var_list)))
-                        var_out[0, ii, jj] = nan_sum / valid_count
+                if np.isnan(grid_mask[ii, jj]):
+                    try:
+                        var1 = var_out[0, ii - 1, jj]
+                    except:
+                        var1 = np.nan
+                    try:
+                        var2 = var_out[0, ii + 1, jj]
+                    except:
+                        var2 = np.nan
+                    try:
+                        var3 = var_out[0, ii, jj - 1]
+                    except:
+                        var3 = np.nan
+                    try:
+                        var4 = var_out[0, ii, jj + 1]
+                    except:
+                        var4 = np.nan
+                    var_list = [var1, var2, var3, var4]
+                    nan_sum = np.nansum(var_list)
+                    valid_count = (len(var_list) - np.sum(np.isnan(var_list)))
+                    var_out[0, ii, jj] = nan_sum / valid_count
 
     if (n_dims == 4):
+        dim1 = np.shape(varin)[0]
+        dim2 = np.shape(varin)[1]
+        var_out = np.zeros((dim1, dim2, dim_ns_out, dim_we_out), dtype="float")
+        #for dim_1 in range(dim1):
+        #    for dim_2 in range(dim2):
+        #        var_out[dim_1, dim_2, :, :] = grid_mask[:, :]
+
+        #for dim_1 in range(dim1):
+        if 1:
+            #for dim_2 in range(dim2):
+            if 1 == 1:
+                ii_count = 0
+                jj_count = 0
+                for ii in range(dim_ns_out):
+                    for jj in range(dim_we_out):
+                        if np.isnan(grid_mask[ii, jj]) == 1:
+                            continue
+                        else:
+                            #var_out[dim_1, :, ii, jj] = varin[dim_1, :, ii_count, jj_count]
+                            var_out[:, :, ii, jj] = varin[:, :, ii_count, jj_count]
+                            jj_count = jj_count + 1
+                            if jj_count == dim_we_in:
+                                jj_count = 0
+                                ii_count = ii_count + 1
+
+        # now use your copied values to fill in the blank spots
+        #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
         test = np.zeros((4, dim2))
         for dim_1 in range(dim1):
             #for dim_2 in range(dim2):
             for ii in range(np.shape(grid_mask)[0]):
                 for jj in range(np.shape(grid_mask)[1]):
-                    if (np.isnan(grid_mask[ii, jj])):
+                    if np.isnan(grid_mask[ii, jj]):
                         try:
                             test[0, :] = var_out[0, :, ii - 1, jj]
                         except:
