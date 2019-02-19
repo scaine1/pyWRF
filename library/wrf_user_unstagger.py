@@ -178,14 +178,11 @@ def wrf_user_unstagger_NMM(varin, unstagDim):
         dim1 = np.shape(varin)[0]
         var_out = np.zeros((dim1, dim_ns_out, dim_we_out), dtype="float")
         var_out[:, :, :] = np.nan
-
         ii_count = 0
         jj_count = 0
         for ii in range(dim_ns_out):
             for jj in range(dim_we_out):
-                if np.isnan(grid_mask[ii, jj]):
-                    continue
-                else:
+                if not np.isnan(grid_mask[ii, jj]):
                     var_out[:, ii, jj] = varin[:, ii_count, jj_count]
                     jj_count = jj_count + 1
                     if (jj_count == dim_we_in):
@@ -193,84 +190,43 @@ def wrf_user_unstagger_NMM(varin, unstagDim):
                         ii_count = ii_count + 1
         # now use your copied values to fill in the blank spots
         #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
-        for ii in range(np.shape(grid_mask)[0]):
-            for jj in range(np.shape(grid_mask)[1]):
-                if np.isnan(grid_mask[ii, jj]):
-                    try:
-                        var1 = var_out[0, ii - 1, jj]
-                    except:
-                        var1 = np.nan
-                    try:
-                        var2 = var_out[0, ii + 1, jj]
-                    except:
-                        var2 = np.nan
-                    try:
-                        var3 = var_out[0, ii, jj - 1]
-                    except:
-                        var3 = np.nan
-                    try:
-                        var4 = var_out[0, ii, jj + 1]
-                    except:
-                        var4 = np.nan
-                    var_list = [var1, var2, var3, var4]
-                    nan_sum = np.nansum(var_list)
-                    valid_count = (len(var_list) - np.sum(np.isnan(var_list)))
-                    var_out[0, ii, jj] = nan_sum / valid_count
+        for dim_1 in range(dim1):
+            for ii in range(1, np.shape(grid_mask)[0] -1):
+                for jj in range(1, np.shape(grid_mask)[1] -1):
+                    if np.isnan(grid_mask[ii, jj]):
+                        var1 = var_out[dim_1, ii - 1, jj]
+                        var2 = var_out[dim_1, ii + 1, jj]
+                        var3 = var_out[dim_1, ii, jj - 1]
+                        var4 = var_out[dim_1, ii, jj + 1]
+                        var_out[dim_1, ii, jj] = (var1 + var2 + var3 + var4) /  4.
 
     if (n_dims == 4):
         dim1 = np.shape(varin)[0]
         dim2 = np.shape(varin)[1]
         var_out = np.zeros((dim1, dim2, dim_ns_out, dim_we_out), dtype="float")
-        #for dim_1 in range(dim1):
-        #    for dim_2 in range(dim2):
-        #        var_out[dim_1, dim_2, :, :] = grid_mask[:, :]
-
-        #for dim_1 in range(dim1):
-        if 1:
-            #for dim_2 in range(dim2):
-            if 1 == 1:
-                ii_count = 0
-                jj_count = 0
-                for ii in range(dim_ns_out):
-                    for jj in range(dim_we_out):
-                        if np.isnan(grid_mask[ii, jj]) == 1:
-                            continue
-                        else:
-                            #var_out[dim_1, :, ii, jj] = varin[dim_1, :, ii_count, jj_count]
-                            var_out[:, :, ii, jj] = varin[:, :, ii_count, jj_count]
-                            jj_count = jj_count + 1
-                            if jj_count == dim_we_in:
-                                jj_count = 0
-                                ii_count = ii_count + 1
-
+        var_out[:, :, :, :] = np.nan
+        ii_count = 0
+        jj_count = 0
+        for ii in range(dim_ns_out):
+            for jj in range(dim_we_out):
+                if not np.isnan(grid_mask[ii, jj]):
+                    var_out[:, :, ii, jj] = varin[:, :, ii_count, jj_count]
+                    jj_count = jj_count + 1
+                    if jj_count == dim_we_in:
+                        jj_count = 0
+                        ii_count = ii_count + 1
         # now use your copied values to fill in the blank spots
         #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
         test = np.zeros((4, dim2))
         for dim_1 in range(dim1):
-            #for dim_2 in range(dim2):
-            for ii in range(np.shape(grid_mask)[0]):
-                for jj in range(np.shape(grid_mask)[1]):
+            for ii in range(1, np.shape(grid_mask)[0] -1):
+                for jj in range(1, np.shape(grid_mask)[1] -1):
                     if np.isnan(grid_mask[ii, jj]):
-                        try:
-                            test[0, :] = var_out[0, :, ii - 1, jj]
-                        except:
-                            test[0, :] = [np.nan for x in range(dim2)]
-                        try:
-                            test[1, :] = var_out[0, :, ii + 1, jj]
-                        except:
-                            test[1, :] = [np.nan for x in range(dim2)]
-                        try:
-                            test[2, :] = var_out[0, :, ii, jj - 1]
-                        except:
-                            test[2, :] = [np.nan for x in range(dim2)]
-                        try:
-                            test[3, :] = var_out[0, :, ii, jj + 1]
-                        except:
-                            test[3, :] = [np.nan for x in range(dim2)]
-                        nan_sum = np.nansum(test, 0)
-                        nan_count = np.sum(np.isnan(test), 0)
-                        valid_count = np.shape(test)[0] - nan_count
-                        var_out[0, :, ii, jj] = nan_sum / valid_count
+                        test[0, :] = var_out[dim_1, :, ii - 1, jj]
+                        test[1, :] = var_out[dim_1, :, ii + 1, jj]
+                        test[2, :] = var_out[dim_1, :, ii, jj - 1]
+                        test[3, :] = var_out[dim_1, :, ii, jj + 1]
+                        var_out[dim_1, :, ii, jj] = np.sum(test, 0) / 4.
 
     # Having memory issues with big runs
     # testing reseting of variables for Garbage Collection
