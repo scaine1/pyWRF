@@ -993,9 +993,9 @@ class calc_vars():
             mjx = np.shape(prs)[2]   # NS-DIMENSION
             miy = np.shape(prs)[3]   # WE-DIMENSION
 
-        log_p = np.zeros((ntimes, mkzh, mjx, miy), dtype="float")
-        base_level = np.zeros((ntimes, mjx, miy), dtype="float")
-        ght = np.zeros((ntimes, mkzh, mjx, miy), dtype="float")
+        log_p = np.zeros((ntimes, mkzh, mjx, miy), dtype=np.float32)
+        base_level = np.zeros((ntimes, mjx, miy), dtype=np.float32)
+        ght = np.zeros((ntimes, mkzh, mjx, miy), dtype=np.float32)
 
         for ti in range(ntimes):
             for k in range(mkzh):
@@ -1012,7 +1012,7 @@ class calc_vars():
 
         #now we have ght on staggared levels, we must destagger
         #Actually now ght should be already destaggered because all the variables that made it were destagged 
-        #ght_destag=np.zeros((ntimes,mkzh,mjx,miy), dtype="float")
+        #ght_destag=np.zeros((ntimes,mkzh,mjx,miy), dtype=np.float32)
         #for ti in range(ntimes):
         #    for k in range(mkzh):
         #        ght_destag[ti,k,:,:] = 0.5*( ght[ti,k,:,:] + ght[ti,k+1,:,:] )
@@ -1403,7 +1403,7 @@ class wrf_plots():
         del_lon=lon_range/nlines
 
 
-        spacing_array=np.array([0.5,1.0,5.0,10.0,20.0],dtype='float')
+        spacing_array=np.array([0.5,1.0,5.0,10.0,20.0],dtype=np.float32)
 
         lat_diff= np.sqrt((spacing_array-del_lat)**2)
         lon_diff= np.sqrt((spacing_array-del_lon)**2)
