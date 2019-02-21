@@ -1,0 +1,2 @@
+cython wrf_user_unstagger.pyx
+gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/home/Operator/anaconda3/envs/basemap/include/python3.6m/ -o wrf_user_unstagger.so wrf_user_unstagger.c

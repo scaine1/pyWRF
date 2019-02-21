@@ -2,74 +2,63 @@
 import numpy as np
 cimport numpy as np
 cimport cython
-from datetime import datetime
+#from datetime import datetime
 
 DTYPE = np.float32
 
 def wrf_user_unstagger_ARW(varin, unstagDim):
-    dims = ()
+    #begin = datetime.now()
     dims = np.shape(varin)
     nd = np.shape(dims)[0]
 
-    print(unstagDim, nd)
-    if (unstagDim == "X") | (unstagDim == "U"):
+    #print(unstagDim, nd)
+    if unstagDim == "X" or unstagDim == "U":
         dimU = dims[nd - 1]
-        if (nd == 5):
+        if nd == 5:
             varout = 0.5 * (
                 varin[:, :, :, :, :dimU - 2] + varin[:, :, :, :, 1:dimU - 0])
-
-        if (nd == 4):
+        elif nd == 4:
             varout = 0.5 * (
                 varin[:, :, :, :dimU - 1] + varin[:, :, :, 1:dimU - 0])
-
-        if (nd == 3):
+        elif nd == 3:
             varout = 0.5 * (varin[:, :, :dimU - 1] + varin[:, :, 1:dimU - 0])
-
-        if (nd == 2):
+        elif nd == 2:
             varout = 0.5 * (varin[:, :dimU - 1] + varin[:, 1:dimU - 0])
-
-    if (unstagDim == "Y") | (unstagDim == "V"):
+    elif unstagDim == "Y" or unstagDim == "V":
         dimV = dims[nd - 2]
-        if (nd == 5):
+        if nd == 5:
             varout = 0.5 * (
                 varin[:, :, :, :dimV - 1, :] + varin[:, :, :, 1:dimV - 0, :])
-
-        if (nd == 4):
+        elif nd == 4:
             varout = 0.5 * (
                 varin[:, :, :dimV - 1, :] + varin[:, :, 1:dimV - 0, :])
-
-        if (nd == 3):
+        elif nd == 3:
             varout = 0.5 * (varin[:, :dimV - 1, :] + varin[:, 1:dimV - 0, :])
-
-        if (nd == 2):
+        elif nd == 2:
             varout = 0.5 * (varin[:dimV - 1, :] + varin[1:dimV - 0, :])
-
-    if (unstagDim == "Z"):
+    elif unstagDim == "Z":
         dimW = dims[nd - 3]
-        if (nd == 5):
+        if nd == 5:
             varout = 0.5 * (
                 varin[:, :, 0:dimW - 1, :, :] + varin[:, :, 1:dimW - 0, :, :])
-
-        if (nd == 4):
+        elif nd == 4:
             varout = 0.5 * (
                 varin[:, 0:dimW - 1, :, :] + varin[:, 1:dimW - 0, :, :])
-
-        if (nd == 3):
+        elif nd == 3:
             varout = 0.5 * (varin[0:dimW - 1, :, :] + varin[1:dimW - 0, :, :])
-
-        if (nd == 2):
+        elif nd == 2:
             varout = 0.5 * (varin[:, 0:dimW - 1] + varin[:, 1:dimW - 0])
-
-
-    if (unstagDim == "M"):
+    elif unstagDim == "M":
         print('staggared dim is "M", no support for this yet')
         varout = varin
 
+    #print(f'total time for ARW destagger was {(datetime.now() - begin).total_seconds()}')
     for ele in ["X", "U", "Y", "V", "Z", "M"]:
         if (unstagDim == ele):
             return varout
 
 def unstagger_NMM_Z(varin):
+    #begin = datetime.now()
     dims_in = np.shape(varin)
     n_dims = len(dims_in)
     dimW = dims_in[n_dims - 3]
@@ -83,46 +72,45 @@ def unstagger_NMM_Z(varin):
         var_out = 0.5 * (varin[:, 0:dimW - 1] + varin[:, 1:dimW - 0])
     if (n_dims == 2):
         var_out = 0.5 * (varin[:, 0:dimW - 1] + varin[:, 1:dimW - 0])
+    #print(f'total time for unstag_Z was {(datetime.now() - begin).total_seconds()}')
     return var_out
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_gridmask_NMM(int dim_ns_out, int dim_we_out, str unstagDim):
+def get_gridmask_NMM(Py_ssize_t dim_ns, Py_ssize_t dim_we, str unstagDim):
     """
     This part is general and should not depend on the
     higher dimenions, essentially setting up how the 
     grid is structured
     """
 
-    begin = datetime.now()
-    cdef Py_ssize_t dim_ns = dim_ns_out
-    cdef Py_ssize_t dim_we = dim_we_out
+    #begin = datetime.now()
     grid_mask = np.zeros((dim_ns, dim_we), dtype=DTYPE)
     cdef float[:, :] grid_mask_view = grid_mask
-
-    if unstagDim == 'H':
-        grid_mask_view[:, :] = np.nan
-    if unstagDim == 'V':
-        grid_mask_view[:, :] = 1
-    if unstagDim == 'Z':
-        grid_mask_view[:, :] = np.nan
-
+    cdef float NaN = float('NaN')
     cdef Py_ssize_t ii, jj
-    for ii in range(dim_ns):
-        for jj in range(dim_we):
-            if np.mod(ii, 2) == 0 and np.mod(jj, 2) == 0:
-                if unstagDim == 'H' or unstagDim == 'Z':
-                    grid_mask_view[ii, jj] = 1
-                elif unstagDim == 'V':
-                    grid_mask_view[ii, jj] = np.nan
 
-            if np.mod(ii, 2) == 1 and np.mod(jj, 2) == 1:
-                if unstagDim == 'H' or unstagDim == 'Z':
+    if unstagDim == 'H' or unstagDim == 'Z':
+        grid_mask_view[:, :] = NaN
+    elif unstagDim == 'V':
+        grid_mask_view[:, :] = 1
+
+    if unstagDim == 'H' or unstagDim == 'Z':
+        for ii in range(dim_ns):
+            for jj in range(dim_we):
+                if ii % 2 == 0 and jj %  2 == 0:
                     grid_mask_view[ii, jj] = 1
-                if unstagDim == 'V':
-                    grid_mask_view[ii, jj] = np.nan
-    print(f'total time for grid_mask was {(datetime.now() - begin).total_seconds()}')
+                elif ii % 2 == 1 and jj % 2 == 1:
+                    grid_mask_view[ii, jj] = 1
+    elif unstagDim == 'V':
+        for ii in range(dim_ns):
+            for jj in range(dim_we):
+                if ii % 2 == 0 and jj % 2 == 0:
+                    grid_mask_view[ii, jj] = NaN
+                elif ii % 2 == 1 and jj % 2 == 1:
+                    grid_mask_view[ii, jj] = NaN
+    #print(f'total time for grid_mask was {(datetime.now() - begin).total_seconds()}')
     return grid_mask
 
 #@cython.boundscheck(False)
@@ -134,42 +122,6 @@ def get_gridmask_NMM(int dim_ns_out, int dim_we_out, str unstagDim):
 #    Actually this probably never occurs due to the fact that if
 #    we have 2-d data one of them is probably time or level
 #    """
-#
-#    n_dims = len(np.shape(varin))
-#    dim_ns_in = np.shape(varin)[n_dims - 2]
-#    dim_we_in = np.shape(varin)[n_dims - 1]
-#    dim_ns_out = dim_ns_in
-#    dim_we_out = dim_we_in * 2
-#
-#
-#    # 2 times but no time, i dont think this ever occurs
-#    var_out = np.zeros((dim_ns_out, dim_we_out), dtype=DTYPE)
-#    var_out[:, :] = grid_mask[:, :]
-#    ii_count = 0
-#    jj_count = 0
-#    for ii in range(dim_ns_out):
-#        for jj in range(dim_we_out):
-#            if not np.isnan(grid_mask[ii, jj]):
-#                var_out[ii, jj] = varin[ii_count, jj_count]
-#                jj_count = jj_count + 1
-#                if jj_count == dim_we_in:
-#                    jj_count = 0
-#                    ii_count = ii_count + 1
-#    # now use your copied values to fill in the blank spots
-#    #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
-#    ns_dim = np.shape(grid_mask)[0]
-#    we_dim = np.shape(grid_mask)[1]
-#    for ii in range(1,  ns_dim-1):
-#        for jj in range(1, we_dim-1):
-#            if np.isnan(grid_mask[ii, jj]):
-#                var1 = var_out[ii - 1, jj]
-#                var2 = var_out[ii + 1, jj]
-#                var3 = var_out[ii, jj - 1]
-#                var4 = var_out[ii, jj + 1]
-#                var_out[ii, jj] = 0.25 * (var1 + var2 + var3 + var4)
-#    # below fixes the "edge" problem caused by destaggering
-#    return var_out[1:ns_dim-1, 1:we_dim-1]
-#
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -179,56 +131,57 @@ def regrid_NMM_rank3(np.ndarray[float, ndim=3] varin, np.ndarray[float, ndim=2] 
     3-dimenional arrays
     """
 
+    #begin = datetime.now()
+    cdef float NaN = float('NaN')
+    cdef int dim_we_orig = np.shape(varin)[2]
+    cdef Py_ssize_t dim1 = np.shape(varin)[0] # typically time but not neccessarly
+    cdef Py_ssize_t dim_ns = np.shape(varin)[1]
+    cdef Py_ssize_t dim_we = np.shape(varin)[2] * 2
+    cdef Py_ssize_t indx_1 # dim1 index
+    cdef Py_ssize_t ii, jj # spatial index
+    cdef Py_ssize_t ii_count = 0 # spatial indx on orig grid
+    cdef Py_ssize_t jj_count = 0 # spatial indx on orig grid
+    # defined view_arrays for fast access
     cdef float[:, :, :] varin_view = varin
-    cdef int n_dims = len(np.shape(varin))
-    cdef int dim_ns_in = np.shape(varin)[n_dims - 2]
-    cdef int dim_we_in = np.shape(varin)[n_dims - 1]
-    cdef int dim_ns_out = dim_ns_in
-    cdef int dim_we_out = dim_we_in * 2
-    cdef Py_ssize_t dim1 = np.shape(varin)[0]
-    cdef Py_ssize_t dim_ns = dim_ns_out
-    cdef Py_ssize_t dim_we = dim_we_out
-
     cdef float[:, :] grid_mask_view = grid_mask
-
     var_out = np.zeros((dim1, dim_ns, dim_we), dtype=DTYPE)
     cdef float[:, :, :] var_out_view = var_out
-    var_out_view[:, :, :] = np.nan
+    var_out_view[:, :, :] = NaN
 
-    cdef Py_ssize_t ii, jj
-    cdef Py_ssize_t ii_count = 0
-    cdef Py_ssize_t jj_count = 0
-    for ii in range(dim_ns):
-        for jj in range(dim_we):
-            if not np.isnan(grid_mask_view[ii, jj]):
-                var_out_view[:, ii, jj] = varin_view[:, ii_count, jj_count]
-                jj_count = jj_count + 1
-                if jj_count == dim_we_in:
-                    jj_count = 0
-                    ii_count = ii_count + 1
+    for indx_1 in range(dim1):
+        ii_count = 0
+        jj_count = 0
+        for ii in range(dim_ns):
+            for jj in range(dim_we):
+                # nans and equality are tricky if we are not using is.nan
+                if grid_mask_view[ii, jj] == 1:
+                    var_out_view[indx_1, ii, jj] = varin_view[indx_1, ii_count, jj_count]
+                    jj_count = jj_count + 1
+                    if jj_count == dim_we_orig:
+                        jj_count = 0
+                        ii_count = ii_count + 1
 
+    #print(f'total time for fill was {(datetime.now() - begin).total_seconds()}')
+    #begin = datetime.now()
     # now use your copied values to fill in the blank spots
     #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
-    cdef Py_ssize_t ns_dim = np.shape(grid_mask)[0]
-    cdef Py_ssize_t we_dim = np.shape(grid_mask)[1]
-    cdef Py_ssize_t dim_1
     cdef float var1
     cdef float var2
     cdef float var3
     cdef float var4
 
-    for dim_1 in range(dim1):
-        for ii in range(1, ns_dim-1):
-            for jj in range(1, we_dim-1):
-                if np.isnan(grid_mask_view[ii, jj]):
-                    var1 = var_out_view[dim_1, ii - 1, jj]
-                    var2 = var_out_view[dim_1, ii + 1, jj]
-                    var3 = var_out_view[dim_1, ii, jj - 1]
-                    var4 = var_out_view[dim_1, ii, jj + 1]
-                    var_out_view[dim_1, ii, jj] = 0.25 * (var1 + var2 + var3 + var4)
+    for indx_1 in range(dim1):
+        for ii in range(1, dim_ns-1):
+            for jj in range(1, dim_we-1):
+                if grid_mask_view[ii, jj] != 1:
+                    var1 = var_out_view[indx_1, ii - 1, jj]
+                    var2 = var_out_view[indx_1, ii + 1, jj]
+                    var3 = var_out_view[indx_1, ii, jj - 1]
+                    var4 = var_out_view[indx_1, ii, jj + 1]
+                    var_out_view[indx_1, ii, jj] = 0.25 * (var1 + var2 + var3 + var4)
     # below fixes the "edge" problem caused by destaggering
-
-    return var_out[:, 1:ns_dim-1, 1:we_dim-1]
+    #print(f'total time for interp was {(datetime.now() - begin).total_seconds()}')
+    return var_out[:, 1:dim_ns-1, 1:dim_we-1]
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -237,58 +190,62 @@ def regrid_NMM_rank4(np.ndarray[float, ndim=4] varin, np.ndarray[float, ndim=2] 
     Function to regrid the NMM data when dealing with
     4-dimenional arrays
     """
-    begin = datetime.now()
+    #begin = datetime.now()
+    cdef float NaN = float('NaN')
+    cdef Py_ssize_t dim1 = np.shape(varin)[0] # typically time but not neccessarly
+    cdef Py_ssize_t dim2 = np.shape(varin)[1] # typically bottom-top but not necessarly
+    cdef Py_ssize_t dim_ns = np.shape(varin)[2]
+    cdef int dim_we_orig = np.shape(varin)[3]
+    cdef Py_ssize_t dim_we = np.shape(varin)[3] * 2
+    cdef Py_ssize_t indx_1 # dim1 index
+    cdef Py_ssize_t indx_2 # dim2 index
+    cdef Py_ssize_t ii, jj # spatial index
+    cdef Py_ssize_t ii_count = 0 # spatial indx on orig grid
+    cdef Py_ssize_t jj_count = 0 # spatial indx on orig grid
+
+    # defined view_arrays for fast access
     cdef float[:, :, :, :] varin_view = varin
-    cdef int n_dims = len(np.shape(varin))
-    cdef int dim_ns_in = np.shape(varin)[n_dims - 2]
-    cdef int dim_we_in = np.shape(varin)[n_dims - 1]
-    cdef int dim_ns_out = dim_ns_in
-    cdef int dim_we_out = dim_we_in * 2
-    cdef Py_ssize_t dim1 = np.shape(varin)[0]
-    cdef Py_ssize_t dim2 = np.shape(varin)[1]
-    cdef Py_ssize_t dim_ns = dim_ns_out
-    cdef Py_ssize_t dim_we = dim_we_out
-
     cdef float[:, :] grid_mask_view = grid_mask
-
     var_out = np.zeros((dim1, dim2, dim_ns, dim_we), dtype=DTYPE)
     cdef float[:, :, :, :] var_out_view = var_out
-    var_out_view[:, :, :, :] = np.nan
-    cdef Py_ssize_t ii, jj
-    cdef Py_ssize_t ii_count = 0
-    cdef Py_ssize_t jj_count = 0
-    for ii in range(dim_ns):
-        for jj in range(dim_we):
-            if not np.isnan(grid_mask_view[ii, jj]):
-                var_out_view[:, :, ii, jj] = varin_view[:, :, ii_count, jj_count]
-                jj_count = jj_count + 1
-                if jj_count == dim_we_in:
-                    jj_count = 0
-                    ii_count = ii_count + 1
+    var_out_view[:, :, :, :] = NaN
 
-    print(f'total time for fill was {(datetime.now() - begin).total_seconds()}')
-    begin = datetime.now()
+    for indx_1 in range(dim1):
+        for indx_2 in range(dim2):
+            ii_count = 0
+            jj_count = 0
+            for ii in range(dim_ns):
+                for jj in range(dim_we):
+                    if grid_mask_view[ii, jj] == 1:
+                        var_out_view[indx_1, indx_2, ii, jj] = varin_view[indx_1, indx_2, ii_count, jj_count]
+                        jj_count = jj_count + 1
+                        if jj_count == dim_we_orig:
+                            jj_count = 0
+                            ii_count = ii_count + 1
+
+    #print(f'total time for fill was {(datetime.now() - begin).total_seconds()}')
+    #begin = datetime.now()
     # now use your copied values to fill in the blank spots
     #this method uses 4 grid ;points to work out the value of the point, the borders have nans though
-    cdef Py_ssize_t ns_dim = np.shape(grid_mask)[0]
-    cdef Py_ssize_t we_dim = np.shape(grid_mask)[1]
-    cdef Py_ssize_t dim_1
+    cdef float var1
+    cdef float var2
+    cdef float var3
+    cdef float var4
 
-    test = np.zeros((4, dim2), dtype=DTYPE)
-    cdef float[:, :] test_view = test
-    for dim_1 in range(dim1):
-        for ii in range(1, ns_dim-1):
-            for jj in range(1, we_dim-1):
-                if np.isnan(grid_mask_view[ii, jj]):
-                    test_view[0, :] = var_out_view[dim_1, :, ii - 1, jj]
-                    test_view[1, :] = var_out_view[dim_1, :, ii + 1, jj]
-                    test_view[2, :] = var_out_view[dim_1, :, ii, jj - 1]
-                    test_view[3, :] = var_out_view[dim_1, :, ii, jj + 1]
-                    var_out[dim_1, :, ii, jj] = 0.25 * np.sum(test_view, 0)
+    for indx_1 in range(dim1):
+        for indx_2 in range(dim2):
+            for ii in range(1, dim_ns-1):
+                for jj in range(1, dim_we-1):
+                    if grid_mask_view[ii, jj] != 1:
+                        var1 = var_out_view[indx_1, indx_2, ii - 1, jj]
+                        var2 = var_out_view[indx_1, indx_2, ii + 1, jj]
+                        var3 = var_out_view[indx_1, indx_2, ii, jj - 1]
+                        var4 = var_out_view[indx_1, indx_2, ii, jj + 1]
+                        var_out_view[indx_1, indx_2, ii, jj] = 0.25 * (var1 + var2 + var3 + var4)
     # below fixes the "edge" problem caused by destaggering
 
-    print(f'total time for interp was {(datetime.now() - begin).total_seconds()}')
-    return var_out[:, :, 1:ns_dim-1, 1:we_dim-1]
+    #print(f'total time for interp was {(datetime.now() - begin).total_seconds()}')
+    return var_out[:, :, 1:dim_ns-1, 1:dim_we-1]
 
 
 def wrf_user_unstagger_NMM(varin, unstagDim):
@@ -298,7 +255,7 @@ def wrf_user_unstagger_NMM(varin, unstagDim):
         varin = var_out
 
     n_dims = len(np.shape(varin))
-    print(unstagDim, n_dims)
+    #print(unstagDim, n_dims)
 
     if n_dims == 2:
         # we only have time and height so no need for spatial fix
