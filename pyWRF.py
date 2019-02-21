@@ -30,7 +30,11 @@ if use_NIO:
 else:
     import netCDF4
     import pygrib
-import wrf_user_unstagger
+try:
+    import wrf_user_unstagger
+except:
+    print('cannot use cython version of unstagger')
+    import wrf_user_unstagger_pure as wrf_user_unstagger
 import perturbation_variables
 import numpy as np
 from matplotlib import pylab as pl
