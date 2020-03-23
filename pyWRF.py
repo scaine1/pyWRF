@@ -371,7 +371,7 @@ class calc_vars():
         qvapor = None
         return sph
 
-    def get_ij_lat_long(self, lat_array, long_array, user_lat, user_lon):
+    def get_ij_lat_long(self, lat_array, long_array_orig, user_lat, user_lon):
         """This function is designed to return the closest grid point to your chosen lat, long.
         Inputs:
         ------
@@ -394,6 +394,10 @@ class calc_vars():
             if xlat and xlon is 2d.
             """
         verbose=True
+
+        # fix for -ve long
+        user_lon = np.mod(user_lon, 360)
+        long_array =  np.mod(long_array_orig, 360)
 
         if (user_lat < np.min(lat_array)) or (user_lat > np.max(lat_array)) or  (user_lon < np.min(long_array)) or (user_lon > np.max(long_array)):
             print('point outside array bounds, skipping')
