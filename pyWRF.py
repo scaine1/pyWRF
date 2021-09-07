@@ -2049,6 +2049,10 @@ class wrf_file(calc_vars, wrf_plots):
             if use_NIO:
                 self.filename=str(self.filename+'.nc')
             self.file_type='nc'
+        if (filename.count('power_d0')==1) & (filename[-3:] != '.nc'):
+            if use_NIO:
+                self.filename=str(self.filename+'.nc')
+            self.file_type='nc'
         if (filename.count('WRFPRS')==1) & (filename[-4:] != '.grb'):
             if use_NIO:
                 self.filename=str(self.filename+'.grb')
